@@ -1,0 +1,278 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Trend {
+  id                      String          @id @default(uuid())
+  title                   String
+  slug                    String          @unique
+  summary                 String
+  status                  String          @default("DISCOVERED") // DISCOVERED, RESEARCHING, RESEARCHED, GENERATING, DRAFTED, ARCHIVED
+  
+  // Transparent 5-Factor Scoring (0-100 normalized)
+  score                   Float           @default(0)
+  freshnessScore          Float           @default(0)
+  developerRelevanceScore Float           @default(0)
+  engagementScore         Float           @default(0)
+  noveltyScore            Float           @default(0)
+  credibilityScore        Float           @default(0)
+  scoreReason             String?
+  
+  firstDetectedAt         DateTime        @default(now())
+  lastDetectedAt          DateTime        @default(now())
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  evidences               TrendEvidence[]
+  topics                  TrendToTopic[]
+  researchReport          ResearchReport?
+  contentItems            ContentItem[]
+
+  @@index([score])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TrendSource {
+  id           String          @id @default(uuid())
+  name         String          @unique
+  adapterType  String          // "hackernews", "github", "reddit", "rss", "websearch", "social", "engineers"
+  config       String          @default("{}") // JSON serialized config
+  enabled      Boolean         @default(true)
+  lastPolledAt DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  evidences    TrendEvidence[]
+}
+
+model TrendTopic {
+  id        String         @id @default(uuid())
+  name      String         @unique
+  slug      String         @unique
+  category  String         @default("general") // "agents", "infra", "models", "tooling"
+  enabled   Boolean        @default(true)
+  weight    Float          @default(1.0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  trends    TrendToTopic[]
+}
+
+model TrendToTopic {
+  trendId String
+  topicId String
+  trend   Trend      @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  topic   TrendTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([trendId, topicId])
+  @@index([topicId])
+}
+
+model TrendEvidence {
+  id          String      @id @default(uuid())
+  trendId     String
+  sourceId    String
+  sourceName  String
+  sourceUrl   String
+  rawTitle    String
+  snippet     String?
+  author      String?
+  rawScore    Float?
+  publishedAt DateTime?
+  crawledAt   DateTime    @default(now())
+
+  trend       Trend       @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  source      TrendSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([trendId])
+  @@index([sourceUrl])
+}
+
+model ResearchReport {
+  id              String        @id @default(uuid())
+  trendId         String        @unique
+  keyFacts        String        // JSON serialized string[]
+  whatChanged     String
+  whyItMatters    String
+  developerImpact String
+  uncertainties   String        // JSON serialized string[]
+  sources         String        // JSON serialized { title, url, credibility }[]
+  confidence      Float         // 0 - 100
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  trend           Trend         @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  contentItems    ContentItem[]
+}
+
+model ContentItem {
+  id               String          @id @default(uuid())
+  trendId          String
+  researchReportId String
+  status           String          @default("DRAFT") // DRAFT, REVIEWING, APPROVED, REJECTED, SCHEDULED, PUBLISHED, FAILED
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  trend            Trend           @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  researchReport   ResearchReport  @relation(fields: [researchReportId], references: [id], onDelete: Cascade)
+  variants         ContentVariant[]
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model ContentVariant {
+  id             String          @id @default(uuid())
+  contentItemId  String
+  platform       String          // "LINKEDIN", "X"
+  text           String
+  hook           String?
+  isThread       Boolean         @default(false)
+  threadPosts    String?         // JSON serialized string[] if isThread is true
+  characterCount Int
+  status         String          @default("DRAFT") // DRAFT, APPROVED, REJECTED, PUBLISHED
+  version        Int             @default(1)
+  promptVersion  String          @default("v1")
+  model          String          @default("mock")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  contentItem    ContentItem     @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  qualityChecks  QualityCheck[]
+  publications   Publication[]
+
+  @@index([contentItemId])
+  @@index([platform, status])
+}
+
+model QualityCheck {
+  id               String         @id @default(uuid())
+  contentVariantId String
+  factualAccuracy  Float          // 0-100
+  originality      Float          // 0-100
+  developerValue   Float          // 0-100
+  writingQuality   Float          // 0-100
+  sourceConfidence Float          // 0-100
+  spamScore        Float          // 0-100 (lower is better)
+  overallScore     Float          // 0-100
+  passed           Boolean        @default(false)
+  feedback         String         // JSON serialized string[]
+  checks           String         // JSON serialized boolean audit details
+  createdAt        DateTime       @default(now())
+
+  contentVariant   ContentVariant @relation(fields: [contentVariantId], references: [id], onDelete: Cascade)
+
+  @@index([contentVariantId])
+}
+
+model Publication {
+  id               String         @id @default(uuid())
+  contentVariantId String
+  platform         String         // "LINKEDIN", "X"
+  platformPostId   String?
+  postUrl          String?
+  status           String         // "SUCCESS", "FAILED", "PENDING"
+  error            String?
+  retryCount       Int            @default(0)
+  publishedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  contentVariant   ContentVariant @relation(fields: [contentVariantId], references: [id], onDelete: Cascade)
+  analytics        AnalyticsMetric[]
+
+  @@index([platform, platformPostId])
+  @@index([publishedAt])
+}
+
+model Account {
+  id              String    @id @default(uuid())
+  platform        String    @unique // "LINKEDIN", "X"
+  accountId       String
+  accountName     String
+  username        String?
+  avatarUrl       String?
+  accessTokenEnc  String    // Encrypted with AES-256-GCM
+  refreshTokenEnc String?   // Encrypted with AES-256-GCM
+  tokenExpiresAt  DateTime?
+  scopes          String?   // JSON serialized string[]
+  connectedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Schedule {
+  id             String    @id @default(uuid())
+  name           String
+  jobType        String    // "DISCOVERY", "PUBLISHING", "ANALYTICS"
+  cronExpression String    // e.g. "0 */6 * * *"
+  enabled        Boolean   @default(true)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model AgentRun {
+  id            String    @id @default(uuid())
+  agentType     String    // "DISCOVERY", "RESEARCH", "LINKEDIN", "X", "QUALITY", "ANALYTICS"
+  model         String
+  provider      String
+  promptVersion String
+  inputData     String    // JSON serialized
+  outputData    String?   // JSON serialized
+  tokensUsed    Int       @default(0)
+  latencyMs     Int       @default(0)
+  status        String    // "SUCCESS", "FAILED"
+  error         String?
+  createdAt     DateTime  @default(now())
+
+  @@index([agentType, status])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   // JSON serialized
+  updatedAt DateTime @updatedAt
+}
+
+model VoiceProfile {
+  id                 String   @id @default(uuid())
+  name               String   @default("Default Technical Voice")
+  tone               String   // JSON serialized string[]
+  audience           String   // JSON serialized string[]
+  technicalDepth     Int      @default(7)  // 1-10
+  humorLevel         Int      @default(2)  // 1-10
+  emojiLevel         Int      @default(1)  // 1-10
+  preferredStructure String   // JSON serialized string[]
+  avoidPhrases       String   // JSON serialized string[]
+  preferredTopics    String   // JSON serialized string[]
+  isDefault          Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AnalyticsMetric {
+  id             String      @id @default(uuid())
+  publicationId  String
+  platform       String      // "LINKEDIN", "X"
+  likes          Int         @default(0)
+  comments       Int         @default(0)
+  shares         Int         @default(0)
+  impressions    Int         @default(0)
+  engagementRate Float       @default(0)
+  fetchedAt      DateTime    @default(now())
+
+  publication    Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId, fetchedAt])
+}

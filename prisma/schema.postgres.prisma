@@ -1,0 +1,301 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TrendStatus {
+  DISCOVERED
+  RESEARCHING
+  RESEARCHED
+  GENERATING
+  DRAFTED
+  ARCHIVED
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEWING
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum Platform {
+  LINKEDIN
+  X
+}
+
+model Trend {
+  id                      String          @id @default(uuid())
+  title                   String
+  slug                    String          @unique
+  summary                 String
+  status                  TrendStatus     @default(DISCOVERED)
+  
+  score                   Float           @default(0)
+  freshnessScore          Float           @default(0)
+  developerRelevanceScore Float           @default(0)
+  engagementScore         Float           @default(0)
+  noveltyScore            Float           @default(0)
+  credibilityScore        Float           @default(0)
+  scoreReason             String?
+  
+  firstDetectedAt         DateTime        @default(now())
+  lastDetectedAt          DateTime        @default(now())
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  evidences               TrendEvidence[]
+  topics                  TrendToTopic[]
+  researchReport          ResearchReport?
+  contentItems            ContentItem[]
+
+  @@index([score(sort: Desc)])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TrendSource {
+  id           String          @id @default(uuid())
+  name         String          @unique
+  adapterType  String
+  config       Json            @default("{}")
+  enabled      Boolean         @default(true)
+  lastPolledAt DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  evidences    TrendEvidence[]
+}
+
+model TrendTopic {
+  id        String         @id @default(uuid())
+  name      String         @unique
+  slug      String         @unique
+  category  String         @default("general")
+  enabled   Boolean        @default(true)
+  weight    Float          @default(1.0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  trends    TrendToTopic[]
+}
+
+model TrendToTopic {
+  trendId String
+  topicId String
+  trend   Trend      @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  topic   TrendTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([trendId, topicId])
+  @@index([topicId])
+}
+
+model TrendEvidence {
+  id          String      @id @default(uuid())
+  trendId     String
+  sourceId    String
+  sourceName  String
+  sourceUrl   String
+  rawTitle    String
+  snippet     String?
+  author      String?
+  rawScore    Float?
+  publishedAt DateTime?
+  crawledAt   DateTime    @default(now())
+
+  trend       Trend       @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  source      TrendSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([trendId])
+  @@index([sourceUrl])
+}
+
+model ResearchReport {
+  id              String        @id @default(uuid())
+  trendId         String        @unique
+  keyFacts        Json
+  whatChanged     String
+  whyItMatters    String
+  developerImpact String
+  uncertainties   Json
+  sources         Json
+  confidence      Float
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  trend           Trend         @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  contentItems    ContentItem[]
+}
+
+model ContentItem {
+  id               String          @id @default(uuid())
+  trendId          String
+  researchReportId String
+  status           ContentStatus   @default(DRAFT)
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  trend            Trend           @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  researchReport   ResearchReport  @relation(fields: [researchReportId], references: [id], onDelete: Cascade)
+  variants         ContentVariant[]
+
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model ContentVariant {
+  id             String          @id @default(uuid())
+  contentItemId  String
+  platform       Platform
+  text           String
+  hook           String?
+  isThread       Boolean         @default(false)
+  threadPosts    Json?
+  characterCount Int
+  status         ContentStatus   @default(DRAFT)
+  version        Int             @default(1)
+  promptVersion  String          @default("v1")
+  model          String          @default("mock")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  contentItem    ContentItem     @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  qualityChecks  QualityCheck[]
+  publications   Publication[]
+
+  @@index([contentItemId])
+  @@index([platform, status])
+}
+
+model QualityCheck {
+  id               String         @id @default(uuid())
+  contentVariantId String
+  factualAccuracy  Float
+  originality      Float
+  developerValue   Float
+  writingQuality   Float
+  sourceConfidence Float
+  spamScore        Float
+  overallScore     Float
+  passed           Boolean        @default(false)
+  feedback         Json
+  checks           Json
+  createdAt        DateTime       @default(now())
+
+  contentVariant   ContentVariant @relation(fields: [contentVariantId], references: [id], onDelete: Cascade)
+
+  @@index([contentVariantId])
+}
+
+model Publication {
+  id               String         @id @default(uuid())
+  contentVariantId String
+  platform         Platform
+  platformPostId   String?
+  postUrl          String?
+  status           String
+  error            String?
+  retryCount       Int            @default(0)
+  publishedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  contentVariant   ContentVariant @relation(fields: [contentVariantId], references: [id], onDelete: Cascade)
+  analytics        AnalyticsMetric[]
+
+  @@index([platform, platformPostId])
+  @@index([publishedAt])
+}
+
+model Account {
+  id              String    @id @default(uuid())
+  platform        Platform  @unique
+  accountId       String
+  accountName     String
+  username        String?
+  avatarUrl       String?
+  accessTokenEnc  String
+  refreshTokenEnc String?
+  tokenExpiresAt  DateTime?
+  scopes          Json?
+  connectedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Schedule {
+  id             String    @id @default(uuid())
+  name           String
+  jobType        String
+  cronExpression String
+  enabled        Boolean   @default(true)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model AgentRun {
+  id            String    @id @default(uuid())
+  agentType     String
+  model         String
+  provider      String
+  promptVersion String
+  inputData     Json
+  outputData    Json?
+  tokensUsed    Int       @default(0)
+  latencyMs     Int       @default(0)
+  status        String
+  error         String?
+  createdAt     DateTime  @default(now())
+
+  @@index([agentType, status])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model VoiceProfile {
+  id                 String   @id @default(uuid())
+  name               String   @default("Default Technical Voice")
+  tone               Json
+  audience           Json
+  technicalDepth     Int      @default(7)
+  humorLevel         Int      @default(2)
+  emojiLevel         Int      @default(1)
+  preferredStructure Json
+  avoidPhrases       Json
+  preferredTopics    Json
+  isDefault          Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AnalyticsMetric {
+  id             String      @id @default(uuid())
+  publicationId  String
+  platform       Platform
+  likes          Int         @default(0)
+  comments       Int         @default(0)
+  shares         Int         @default(0)
+  impressions    Int         @default(0)
+  engagementRate Float       @default(0)
+  fetchedAt      DateTime    @default(now())
+
+  publication    Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId, fetchedAt])
+}
