@@ -12,6 +12,8 @@ out/
 .env.production
 
 # Database
+*.db
+*.db-journal
 prisma/*.db
 prisma/*.db-journal
 

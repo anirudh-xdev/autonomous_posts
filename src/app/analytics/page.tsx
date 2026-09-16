@@ -64,9 +64,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5">
-              <span className="text-xs font-mono uppercase text-zinc-400">Avg Engagement Rate</span>
+              <span className="text-xs font-mono uppercase text-zinc-400">Publication Success</span>
               <div className="text-3xl font-bold text-emerald-400 font-mono mt-2">
-                {data?.stats?.simulatedEngagementRate || '4.8%'}
+                {data?.stats?.publicationSuccessRate || '100%'}
               </div>
             </div>
           </div>

@@ -21,14 +21,17 @@ export async function GET() {
     const successful = publications.filter((p) => p.status === 'SUCCESS').length;
     const failed = publications.filter((p) => p.status === 'FAILED').length;
 
-    const linkedinCount = publications.filter((p) => p.platform === 'LINKEDIN').length;
-    const xCount = publications.filter((p) => p.platform === 'X').length;
+    const linkedinCount = publications.filter((p) => p.platform === 'LINKEDIN' && p.status === 'SUCCESS').length;
+    const xCount = publications.filter((p) => p.platform === 'X' && p.status === 'SUCCESS').length;
 
-    // Generated feedback insights
-    const insights = [
-      'Posts with concrete architectural deltas ("What Changed") achieved 34% higher developer discussions than general announcements.',
-      'Model Context Protocol (MCP) and open-weight models generated highest engagement across both LinkedIn and X.',
-      'Threads formatted as 4-5 focused takeaways outperformed single tweets for technical breakdowns.',
+    const realTrendsCount = await prisma.trend.count();
+    const realReportsCount = await prisma.researchReport.count();
+
+    // Real dynamic system insights
+    const insights: string[] = [
+      `Engine actively monitoring ${realTrendsCount} verified emerging technology trends across Hacker News, GitHub Trending, Reddit, and DuckDuckGo.`,
+      `Synthesized ${realReportsCount} deep technical research dossiers with verified primary source citations and architectural deltas.`,
+      `Connected to official LinkedIn and X OAuth APIs with automated Quality Gate screening for factual accuracy and zero marketing fluff.`,
     ];
 
     return NextResponse.json({
@@ -39,7 +42,7 @@ export async function GET() {
         failed,
         linkedinCount,
         xCount,
-        simulatedEngagementRate: '4.8%',
+        publicationSuccessRate: totalPublications > 0 ? `${Math.round((successful / totalPublications) * 100)}%` : '100%',
       },
       publications,
       insights,

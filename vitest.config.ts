@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: {
+      DATABASE_URL: 'file:./test.db',
+      NODE_ENV: 'test',
+    },
     include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
