@@ -81,9 +81,8 @@ export class LinkedInPublisher implements SocialPublisher {
     }
 
     const accessToken = decryptSecret(account.accessTokenEnc);
-    const personUrn = account.accountId.startsWith('urn:li:')
-      ? account.accountId
-      : `urn:li:person:${account.accountId}`;
+    const rawId = account.accountId.replace(/^urn:li:(person:)?/, '');
+    const personUrn = `urn:li:person:${rawId}`;
 
     return { accessToken, personUrn };
   }
@@ -100,7 +99,7 @@ export class LinkedInPublisher implements SocialPublisher {
 
     const { accessToken, personUrn } = await this.getDecryptedToken();
 
-    // LinkedIn REST Posts API v202401
+    // LinkedIn REST Posts API v202503
     const url = 'https://api.linkedin.com/rest/posts';
     const payload = {
       author: personUrn,
@@ -120,7 +119,7 @@ export class LinkedInPublisher implements SocialPublisher {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'LinkedIn-Version': '202401',
+        'LinkedIn-Version': process.env.LINKEDIN_VERSION || '202503',
         'X-Restli-Protocol-Version': '2.0.0',
       },
       body: JSON.stringify(payload),
