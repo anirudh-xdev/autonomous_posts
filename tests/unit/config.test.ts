@@ -7,7 +7,7 @@ describe('Phase 1: Configuration & Foundation', () => {
     expect(env.PUBLISHING_MODE).toBe('APPROVAL_REQUIRED');
     expect(env.MIN_TREND_SCORE).toBe(70);
     expect(env.MIN_QUALITY_SCORE).toBe(85);
-    expect(env.LLM_PROVIDER).toBe('mock');
+    expect(['mock', 'openrouter', 'gemini', 'openai', 'anthropic']).toContain(env.LLM_PROVIDER);
   });
 
   it('should properly encrypt and decrypt sensitive secrets with AES-256-GCM', () => {

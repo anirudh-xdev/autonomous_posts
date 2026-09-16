@@ -72,7 +72,31 @@ VOICE CONSTRAINTS:
 Adhere to the following rules:
 1. For LinkedIn: Write an insightful post (700-1500 chars) with strong whitespace, practical developer perspective, and a discussion question.
 2. For X: Provide a punchy single post (strictly <= 280 chars) AND a 4-5 tweet thread where each post is strictly <= 280 chars.
-3. NEVER write generic motivational content or corporate marketing copy. Always explain the "why" for developers.`;
+3. NEVER write generic motivational content or corporate marketing copy. Always explain the "why" for developers.
+
+CRITICAL JSON FORMAT:
+Respond ONLY with a valid JSON object matching this exact schema:
+{
+  "linkedin": {
+    "hook": "Strong technical opening hook",
+    "text": "Full LinkedIn post text (700-1400 chars) with strong engineering analysis, code/architectural insights, and engaging discussion question"
+  },
+  "x": {
+    "hook": "Punchy tweet hook",
+    "text": "Single tweet (under 270 chars)",
+    "isThread": true,
+    "posts": [
+      "Tweet 1 (under 270 chars)",
+      "Tweet 2 (under 270 chars)",
+      "Tweet 3 (under 270 chars)",
+      "Tweet 4 (under 270 chars)"
+    ]
+  },
+  "reasoning": {
+    "angle": "The core technical angle taken",
+    "developerInsight": "Why this matters for practicing engineers"
+  }
+}`;
 
     const unifiedUserPrompt = `RESEARCH REPORT:
 Topic: ${trend.title}
@@ -82,7 +106,7 @@ Developer Impact: ${report.developerImpact}
 Key Facts:
 ${JSON.parse(report.keyFacts).join('\n- ')}
 
-Generate both the LinkedIn post and the X post/thread in structured JSON format.`;
+Generate both the LinkedIn post and the X post/thread in the required JSON format.`;
 
     // 2. Query LLM
     let response;
@@ -94,7 +118,8 @@ Generate both the LinkedIn post and the X post/thread in structured JSON format.
         ],
         schema: ContentGenerationResultSchema,
         schemaName: 'ContentGenerationResultSchema',
-        temperature: 0.6,
+        temperature: 0.35,
+        maxTokens: 3000,
       });
 
       // Record agent run

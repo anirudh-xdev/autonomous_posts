@@ -26,7 +26,7 @@ describe('Phase 3: AI Provider Abstraction & Prompt Management', () => {
     expect(rendered.user).toContain('Standardized JSON-RPC protocol');
   });
 
-  it('should return MockLLMProvider as default or safe fallback when no keys are present', () => {
+  it('should return MockLLMProvider as default or safe fallback when in test mode', () => {
     const provider = LLMProviderFactory.getProvider();
     expect(provider.name).toBe('mock');
   });

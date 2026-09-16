@@ -61,7 +61,56 @@ export class WebSearchTrendSource implements TrendSource {
       }
     }
 
-    // High-signal curated search items for AI developer tools & releases
+    // If DuckDuckGo provider is selected (completely free, zero API key required)
+    if (process.env.WEB_SEARCH_PROVIDER === 'duckduckgo') {
+      try {
+        const ddgRes = await fetch(
+          'https://api.duckduckgo.com/?q=latest+artificial+intelligence+developer+releases&format=json',
+          {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AutonomousPosts/1.0)' },
+          }
+        );
+
+        if (ddgRes.ok) {
+          const ddgData = (await ddgRes.json()) as {
+            RelatedTopics?: Array<{ Text?: string; FirstURL?: string; Topics?: Array<{ Text?: string; FirstURL?: string }> }>;
+          };
+
+          const candidates: TrendCandidate[] = [];
+          const topicsList = ddgData.RelatedTopics || [];
+
+          for (const item of topicsList.slice(0, limit)) {
+            const text = item.Text || (item.Topics && item.Topics[0]?.Text);
+            const url = item.FirstURL || (item.Topics && item.Topics[0]?.FirstURL);
+
+            if (text && url) {
+              const extractedTopics = TrendNormalizer.extractTopics(text, '');
+              candidates.push({
+                title: text.split(' - ')[0] || text.slice(0, 80),
+                summary: text,
+                sourceUrl: url,
+                sourceName: 'Live Web Search (DuckDuckGo)',
+                publishedAt: new Date(),
+                topics: extractedTopics,
+                freshnessScore: 9.0,
+                engagementScore: 8.5,
+                developerRelevanceScore: 9.2,
+                noveltyScore: 8.8,
+                credibilityScore: 9.0,
+                totalScore: 0,
+              });
+            }
+          }
+
+          if (candidates.length > 0) {
+            logger.info(`WebSearchTrendSource: DuckDuckGo returned ${candidates.length} live candidates`);
+            return candidates;
+          }
+        }
+      } catch (ddgErr) {
+        logger.warn('DuckDuckGo search failed, falling back to curated web items', { error: String(ddgErr) });
+      }
+    }
     return [
       {
         title: 'OpenAI Releases Responses API with Integrated Search & Python Sandbox',
