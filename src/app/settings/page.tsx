@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Sliders, Shield, Key, Save, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Settings, Sliders, Shield, Key, Save, CheckCircle2, AlertTriangle, Linkedin, Twitter, ExternalLink, Link2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [connectBanner, setConnectBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Form states
   const [technicalDepth, setTechnicalDepth] = useState(7);
@@ -46,6 +47,28 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchSettings();
+
+    // Check for OAuth redirect params in URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const connected = params.get('connected');
+      const name = params.get('name');
+      const error = params.get('error');
+
+      if (connected) {
+        setConnectBanner({
+          type: 'success',
+          message: `🎉 Successfully connected ${connected === 'linkedin' ? 'LinkedIn' : 'X'} for ${name || 'your account'}! Live publishing is now active.`,
+        });
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (error) {
+        setConnectBanner({
+          type: 'error',
+          message: `⚠️ Connection failed: ${decodeURIComponent(error)}`,
+        });
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
   }, []);
 
   const handleSave = async () => {
@@ -91,6 +114,32 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
+      {/* OAuth Connection Status Banner */}
+      {connectBanner && (
+        <div
+          className={`p-4 rounded-xl border flex items-center justify-between text-sm ${
+            connectBanner.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {connectBanner.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            )}
+            <span>{connectBanner.message}</span>
+          </div>
+          <button
+            onClick={() => setConnectBanner(null)}
+            className="text-xs opacity-70 hover:opacity-100 font-mono"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -98,29 +147,38 @@ export default function SettingsPage() {
             System Configuration &amp; Voice Profile
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
-            Fine-tune agent persona, automation thresholds, safety gates, and official API connections.
+            Configure technical tone, thresholds for publication, and 1-Click social integrations.
           </p>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg text-xs font-semibold transition-all shadow-lg shadow-emerald-950/20"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg transition-colors shadow-sm disabled:opacity-50"
         >
-          <Save className="w-4 h-4" />
-          {saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Configuration'}
+          {saving ? (
+            'Saving...'
+          ) : saveSuccess ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" /> Saved!
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" /> Save Changes
+            </>
+          )}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Voice Profile Card */}
+        {/* Voice Persona Controls */}
         <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 space-y-6">
           <div className="flex items-center gap-2 border-b border-[#30363d] pb-3">
             <Sliders className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-base font-semibold text-white">Personal Voice Profile</h3>
+            <h3 className="text-base font-semibold text-white">Voice &amp; Persona Weights</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <div className="flex justify-between text-xs font-mono text-zinc-300 mb-1">
                 <span>Technical Depth:</span>
@@ -134,30 +192,29 @@ export default function SettingsPage() {
                 onChange={(e) => setTechnicalDepth(Number(e.target.value))}
                 className="w-full accent-emerald-500 bg-[#0d1117]"
               />
-              <span className="text-[11px] text-zinc-500">
-                1: High-level overview &bull; 7: Senior Engineer &bull; 10: Deep kernel/model architecture
-              </span>
+              <span className="text-[11px] text-zinc-500">1: High-level overview &bull; 10: Code snippets &amp; architecture</span>
             </div>
 
             <div>
               <div className="flex justify-between text-xs font-mono text-zinc-300 mb-1">
-                <span>Humor Level:</span>
+                <span>Humor &amp; Wit:</span>
                 <span className="text-emerald-400 font-bold">{humorLevel} / 10</span>
               </div>
               <input
                 type="range"
-                min="1"
+                min="0"
                 max="10"
                 value={humorLevel}
                 onChange={(e) => setHumorLevel(Number(e.target.value))}
                 className="w-full accent-emerald-500 bg-[#0d1117]"
               />
+              <span className="text-[11px] text-zinc-500">0: Dry &amp; academic &bull; 10: Playful &amp; ironic</span>
             </div>
 
             <div>
               <div className="flex justify-between text-xs font-mono text-zinc-300 mb-1">
-                <span>Emoji Level:</span>
-                <span className="text-emerald-400 font-bold">{emojiLevel} / 10</span>
+                <span>Emoji Usage:</span>
+                <span className="text-emerald-400 font-bold">{emojiLevel} / 5</span>
               </div>
               <input
                 type="range"
@@ -242,47 +299,143 @@ export default function SettingsPage() {
       </div>
 
       {/* External Integration Status Cards */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 space-y-4">
+      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 space-y-6">
         <div className="flex items-center gap-2 border-b border-[#30363d] pb-3">
           <Key className="w-5 h-5 text-amber-400" />
-          <h3 className="text-base font-semibold text-white">Official API Integrations</h3>
+          <h3 className="text-base font-semibold text-white">Official API Integrations (1-Click OAuth)</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* LinkedIn Integration Card */}
+          <div className="bg-[#0d1117] border border-[#30363d] rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm text-white">LinkedIn Official REST API</span>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-[#0077b5]/10 rounded-lg border border-[#0077b5]/30">
+                  <Linkedin className="w-5 h-5 text-[#0077b5]" />
+                </div>
+                <div>
+                  <span className="font-semibold text-sm text-white block">LinkedIn Official REST API</span>
+                  <span className="text-[11px] text-zinc-400">Personal member profiles &amp; company pages</span>
+                </div>
+              </div>
               <span
                 className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                  data?.integrations?.linkedin?.configured
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  data?.integrations?.linkedin?.connected
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : data?.integrations?.linkedin?.configured
+                    ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                 }`}
               >
-                {data?.integrations?.linkedin?.mode}
+                {data?.integrations?.linkedin?.connected
+                  ? 'Connected'
+                  : data?.integrations?.linkedin?.configured
+                  ? 'Ready to Connect'
+                  : 'Needs Client ID in .env'}
               </span>
             </div>
-            <p className="text-xs text-zinc-400">
-              Configure <code>LINKEDIN_CLIENT_ID</code> and <code>LINKEDIN_CLIENT_SECRET</code> in <code>.env</code> to enable live posting.
-            </p>
+
+            <div className="border-t border-[#21262d] pt-3">
+              {data?.integrations?.linkedin?.connected ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs text-zinc-200 font-medium">
+                      Connected: {data.integrations.linkedin.accountName}
+                    </span>
+                  </div>
+                  <a
+                    href="/api/auth/linkedin"
+                    className="text-[11px] text-zinc-400 hover:text-white underline font-mono"
+                  >
+                    Reconnect
+                  </a>
+                </div>
+              ) : data?.integrations?.linkedin?.configured ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-zinc-400">
+                    Your Client ID is set. Click below to authorize Antigravity to post to your LinkedIn profile.
+                  </p>
+                  <a
+                    href="/api/auth/linkedin"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#0077b5] hover:bg-[#006097] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                    Connect LinkedIn (1-Click OAuth)
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400">
+                  Add <code>LINKEDIN_CLIENT_ID</code> and <code>LINKEDIN_CLIENT_SECRET</code> to your <code>.env</code> file to enable 1-Click Connect.
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 space-y-2">
+          {/* X (Twitter) Integration Card */}
+          <div className="bg-[#0d1117] border border-[#30363d] rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm text-white">X (Twitter) Official API v2</span>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-sky-500/10 rounded-lg border border-sky-500/30">
+                  <Twitter className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <span className="font-semibold text-sm text-white block">X (Twitter) Official API v2</span>
+                  <span className="text-[11px] text-zinc-400">Single tweets &amp; connected reply threads</span>
+                </div>
+              </div>
               <span
                 className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                  data?.integrations?.x?.configured
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  data?.integrations?.x?.connected
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : data?.integrations?.x?.configured
+                    ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                 }`}
               >
-                {data?.integrations?.x?.mode}
+                {data?.integrations?.x?.connected
+                  ? 'Connected'
+                  : data?.integrations?.x?.configured
+                  ? 'Ready to Connect'
+                  : 'Needs Client ID in .env'}
               </span>
             </div>
-            <p className="text-xs text-zinc-400">
-              Configure <code>X_CLIENT_ID</code> and <code>X_CLIENT_SECRET</code> in <code>.env</code> to enable live tweets and threads.
-            </p>
+
+            <div className="border-t border-[#21262d] pt-3">
+              {data?.integrations?.x?.connected ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs text-zinc-200 font-medium">
+                      Connected: @{data.integrations.x.username || data.integrations.x.accountName}
+                    </span>
+                  </div>
+                  <a
+                    href="/api/auth/x"
+                    className="text-[11px] text-zinc-400 hover:text-white underline font-mono"
+                  >
+                    Reconnect
+                  </a>
+                </div>
+              ) : data?.integrations?.x?.configured ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-zinc-400">
+                    Your X Client ID is set. Click below to authorize tweet and thread publishing.
+                  </p>
+                  <a
+                    href="/api/auth/x"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg border border-zinc-700 transition-colors shadow-sm"
+                  >
+                    <Twitter className="w-4 h-4 text-sky-400" />
+                    Connect X (1-Click OAuth)
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400">
+                  Add <code>X_CLIENT_ID</code> and <code>X_CLIENT_SECRET</code> to your <code>.env</code> file to enable 1-Click Connect.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

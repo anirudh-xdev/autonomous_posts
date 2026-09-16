@@ -12,14 +12,42 @@ export async function GET() {
       settingsMap[s.key] = JSON.parse(s.value);
     }
 
+    const linkedinAccount = await prisma.account.findUnique({ where: { platform: 'LINKEDIN' } });
+    const xAccount = await prisma.account.findUnique({ where: { platform: 'X' } });
+
     const integrations = {
       linkedin: {
-        configured: Boolean(env.LINKEDIN_CLIENT_ID && env.LINKEDIN_CLIENT_SECRET),
-        mode: env.LINKEDIN_CLIENT_ID ? 'Official API' : 'Mock Mode (awaiting credentials)',
+        configured: Boolean(
+          (process.env.LINKEDIN_CLIENT_ID || env.LINKEDIN_CLIENT_ID) &&
+          (process.env.LINKEDIN_CLIENT_SECRET || env.LINKEDIN_CLIENT_SECRET)
+        ),
+        connected: Boolean(
+          linkedinAccount && (!linkedinAccount.tokenExpiresAt || linkedinAccount.tokenExpiresAt > new Date())
+        ),
+        accountName: linkedinAccount?.accountName || null,
+        avatarUrl: linkedinAccount?.avatarUrl || null,
+        mode: linkedinAccount
+          ? `Connected as ${linkedinAccount.accountName}`
+          : Boolean(process.env.LINKEDIN_CLIENT_ID || env.LINKEDIN_CLIENT_ID)
+          ? 'Ready to Connect (1-Click)'
+          : 'Awaiting Credentials in .env',
       },
       x: {
-        configured: Boolean(env.X_CLIENT_ID && env.X_CLIENT_SECRET),
-        mode: env.X_CLIENT_ID ? 'Official API v2' : 'Mock Mode (awaiting credentials)',
+        configured: Boolean(
+          (process.env.X_CLIENT_ID || env.X_CLIENT_ID) &&
+          (process.env.X_CLIENT_SECRET || env.X_CLIENT_SECRET)
+        ),
+        connected: Boolean(
+          xAccount && (!xAccount.tokenExpiresAt || xAccount.tokenExpiresAt > new Date())
+        ),
+        accountName: xAccount?.accountName || null,
+        username: xAccount?.username || null,
+        avatarUrl: xAccount?.avatarUrl || null,
+        mode: xAccount
+          ? `Connected as @${xAccount.username || xAccount.accountName}`
+          : Boolean(process.env.X_CLIENT_ID || env.X_CLIENT_ID)
+          ? 'Ready to Connect (1-Click)'
+          : 'Awaiting Credentials in .env',
       },
       llm: {
         provider: env.LLM_PROVIDER,

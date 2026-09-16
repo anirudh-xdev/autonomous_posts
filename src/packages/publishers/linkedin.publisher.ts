@@ -26,6 +26,17 @@ export class LinkedInPublisher implements SocialPublisher {
   async getAccount(): Promise<AccountInfo> {
     const account = await prisma.account.findUnique({ where: { platform: 'LINKEDIN' } });
     if (!account) {
+      if (
+        process.env.LINKEDIN_ACCESS_TOKEN &&
+        process.env.LINKEDIN_ACCESS_TOKEN !== 'your-oauth-access-token'
+      ) {
+        return {
+          platform: 'LINKEDIN',
+          accountId: process.env.LINKEDIN_AUTHOR_URN || 'urn:li:person:env-member',
+          accountName: 'Configured via .env',
+          isConnected: true,
+        };
+      }
       return {
         platform: 'LINKEDIN',
         accountId: '',
@@ -48,9 +59,17 @@ export class LinkedInPublisher implements SocialPublisher {
   private async getDecryptedToken(): Promise<{ accessToken: string; personUrn: string }> {
     const account = await prisma.account.findUnique({ where: { platform: 'LINKEDIN' } });
     if (!account) {
+      if (
+        process.env.LINKEDIN_ACCESS_TOKEN &&
+        process.env.LINKEDIN_ACCESS_TOKEN !== 'your-oauth-access-token'
+      ) {
+        const rawUrn = process.env.LINKEDIN_AUTHOR_URN || '';
+        const personUrn = rawUrn.startsWith('urn:li:') ? rawUrn : `urn:li:person:${rawUrn}`;
+        return { accessToken: process.env.LINKEDIN_ACCESS_TOKEN, personUrn };
+      }
       throw new ExternalApiError(
         'LinkedIn',
-        'LinkedIn account is not connected. Connect account via /settings/integrations.'
+        'LinkedIn account is not connected. Connect account via /settings/integrations or click Connect LinkedIn.'
       );
     }
 
