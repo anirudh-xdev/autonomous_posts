@@ -69,6 +69,15 @@ export class MockLLMProvider implements LLMProvider {
             "5/ What tools would you want your IDE agent to have first-class access to? Database schemas? CI/CD logs? Docker containers?",
           ],
         },
+        visuals: [
+          {
+            type: 'architecture_diagram',
+            title: 'MCP Client-Host-Server Architecture',
+            description: 'Architecture diagram showing how LLM host clients connect to decoupled tool servers over JSON-RPC via stdio or SSE.',
+            suggestedSourceUrl: 'https://github.com/modelcontextprotocol/specification',
+            reasonWhyHelpful: 'Clarifies the architectural boundary between the LLM client, host environment, and external tool servers.',
+          },
+        ],
         reasoning: {
           angle: "Architectural parallel to LSP (Language Server Protocol)",
           developerInsight: "Decoupling tool servers from LLM client implementations prevents vendor lock-in.",

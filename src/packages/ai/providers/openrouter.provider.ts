@@ -28,6 +28,48 @@ export class OpenRouterProvider implements LLMProvider {
     }
   }
 
+  private repairTruncatedJson(str: string): string {
+    let inString = false;
+    let escape = false;
+    const stack: string[] = [];
+
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (char === '\\') {
+        escape = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char === '{') stack.push('}');
+        else if (char === '[') stack.push(']');
+        else if (char === '}' || char === ']') {
+          if (stack.length > 0 && stack[stack.length - 1] === char) {
+            stack.pop();
+          }
+        }
+      }
+    }
+
+    let repaired = str;
+    if (inString) {
+      repaired += '"';
+    }
+    // Remove any trailing commas before closing
+    repaired = repaired.replace(/,\s*$/, '');
+    while (stack.length > 0) {
+      repaired += stack.pop();
+    }
+    return repaired;
+  }
+
   private cleanJson(raw: string): string {
     const trimmed = raw.trim();
 
@@ -57,10 +99,25 @@ export class OpenRouterProvider implements LLMProvider {
     const firstBrace = clean.indexOf('{');
     const lastBrace = clean.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      clean = clean.substring(firstBrace, lastBrace + 1).trim();
+      const candidate = clean.substring(firstBrace, lastBrace + 1).trim();
+      try {
+        JSON.parse(candidate);
+        return candidate;
+      } catch {
+        // Continue to repair
+      }
     }
 
-    return clean;
+    // 4. Fallback to repair unclosed / truncated JSON
+    const startIdx = firstBrace !== -1 ? firstBrace : 0;
+    const toRepair = clean.substring(startIdx);
+    const repaired = this.repairTruncatedJson(toRepair);
+    try {
+      JSON.parse(repaired);
+      return repaired;
+    } catch {
+      return clean;
+    }
   }
 
   async generateText(input: LLMRequest): Promise<LLMResponse> {

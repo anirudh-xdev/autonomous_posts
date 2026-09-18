@@ -14,6 +14,7 @@ export async function GET(
     const formattedVariants = item.variants.map((v) => ({
       ...v,
       threadPosts: v.threadPosts ? JSON.parse(v.threadPosts) : null,
+      visualReferences: v.visualReferences ? JSON.parse(v.visualReferences) : null,
       qualityChecks: v.qualityChecks.map((q) => ({
         ...q,
         feedback: JSON.parse(q.feedback),
@@ -25,6 +26,7 @@ export async function GET(
       success: true,
       contentItem: {
         ...item,
+        visualReferences: item.visualReferences ? JSON.parse(item.visualReferences) : null,
         variants: formattedVariants,
         researchReport: item.researchReport
           ? {

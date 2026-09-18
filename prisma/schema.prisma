@@ -118,6 +118,7 @@ model ContentItem {
   status           String          @default("DRAFT") // DRAFT, REVIEWING, APPROVED, REJECTED, SCHEDULED, PUBLISHED, FAILED
   scheduledAt      DateTime?
   publishedAt      DateTime?
+  visualReferences String?         // JSON serialized VisualReference[] recommendations
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -130,20 +131,21 @@ model ContentItem {
 }
 
 model ContentVariant {
-  id             String          @id @default(uuid())
-  contentItemId  String
-  platform       String          // "LINKEDIN", "X"
-  text           String
-  hook           String?
-  isThread       Boolean         @default(false)
-  threadPosts    String?         // JSON serialized string[] if isThread is true
-  characterCount Int
-  status         String          @default("DRAFT") // DRAFT, APPROVED, REJECTED, PUBLISHED
-  version        Int             @default(1)
-  promptVersion  String          @default("v1")
-  model          String          @default("mock")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id               String          @id @default(uuid())
+  contentItemId    String
+  platform         String          // "LINKEDIN", "X"
+  text             String
+  hook             String?
+  isThread         Boolean         @default(false)
+  threadPosts      String?         // JSON serialized string[] if isThread is true
+  characterCount   Int
+  status           String          @default("DRAFT") // DRAFT, APPROVED, REJECTED, PUBLISHED
+  version          Int             @default(1)
+  promptVersion    String          @default("v1")
+  model            String          @default("mock")
+  visualReferences String?         // JSON serialized VisualReference[] recommendations
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   contentItem    ContentItem     @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
   qualityChecks  QualityCheck[]

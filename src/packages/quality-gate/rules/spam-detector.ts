@@ -18,6 +18,17 @@ export class SpamDetector {
     'don\'t miss this',
     'act fast',
     'drop a comment below for the link',
+    'shifts the paradigm',
+    'paradigm shift',
+    'declarative model-driven',
+    'declarative, model-driven',
+    'deterministic privacy-preserving',
+    'supercharge',
+    'unleash',
+    'delve',
+    'testament to',
+    'spearheading',
+    'groundbreaking',
   ];
 
   /**

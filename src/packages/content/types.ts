@@ -23,9 +23,35 @@ export const XPostSchema = z.object({
   ),
 });
 
+export const VisualReferenceSchema = z.object({
+  type: z.preprocess(
+    (v) => String(v || 'concept_diagram').toLowerCase(),
+    z.enum([
+      'architecture_diagram',
+      'product_screenshot',
+      'benchmark_chart',
+      'official_image',
+      'concept_diagram',
+    ])
+  ),
+  title: z.preprocess((v) => String(v || 'Technical Visual'), z.string().min(3)),
+  description: z.preprocess((v) => String(v || ''), z.string().min(10)),
+  suggestedSourceUrl: z.preprocess(
+    (v) => (v ? String(v) : undefined),
+    z.string().url().optional().or(z.literal(''))
+  ).optional(),
+  reasonWhyHelpful: z.preprocess((v) => String(v || ''), z.string().min(5)),
+});
+
+export type VisualReference = z.infer<typeof VisualReferenceSchema>;
+
 export const ContentGenerationResultSchema = z.object({
   linkedin: LinkedInPostSchema,
   x: XPostSchema,
+  visuals: z.preprocess(
+    (v) => (Array.isArray(v) ? v : []),
+    z.array(VisualReferenceSchema)
+  ).default([]),
   reasoning: z.object({
     angle: z.preprocess((v) => String(v || 'Technical architecture'), z.string()),
     developerInsight: z.preprocess((v) => String(v || 'Practical developer workflow'), z.string()),

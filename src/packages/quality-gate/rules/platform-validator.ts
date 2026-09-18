@@ -18,8 +18,8 @@ export class PlatformValidator {
     }
 
     // Check paragraph formatting (whitespace)
-    const paragraphs = text.split(/\n\s*\n/);
-    if (paragraphs.length < 3 && text.length > 500) {
+    const paragraphs = text.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+    if (paragraphs.length < 3 && text.length > 350) {
       violations.push('Wall of text detected. Use short paragraphs separated by blank lines for readability.');
     }
 

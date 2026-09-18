@@ -43,6 +43,7 @@ export class ContentRepository {
     trendId: string;
     researchReportId: string;
     status?: string;
+    visualReferences?: unknown;
     variants: Array<{
       platform: 'LINKEDIN' | 'X';
       text: string;
@@ -52,6 +53,7 @@ export class ContentRepository {
       characterCount: number;
       promptVersion?: string;
       model?: string;
+      visualReferences?: unknown;
     }>;
   }) {
     return prisma.$transaction(async (tx) => {
@@ -60,6 +62,7 @@ export class ContentRepository {
           trendId: data.trendId,
           researchReportId: data.researchReportId,
           status: data.status ?? 'DRAFT',
+          visualReferences: data.visualReferences ? JSON.stringify(data.visualReferences) : null,
         },
       });
 
@@ -75,6 +78,7 @@ export class ContentRepository {
             characterCount: v.characterCount,
             promptVersion: v.promptVersion ?? 'v1',
             model: v.model ?? 'mock',
+            visualReferences: v.visualReferences ? JSON.stringify(v.visualReferences) : (data.visualReferences ? JSON.stringify(data.visualReferences) : null),
             status: 'DRAFT',
           },
         });

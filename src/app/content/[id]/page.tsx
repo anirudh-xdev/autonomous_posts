@@ -15,6 +15,11 @@ import {
   Edit3,
   Save,
   MessageSquare,
+  Image as ImageIcon,
+  Layers,
+  BarChart3,
+  Monitor,
+  Lightbulb,
 } from 'lucide-react';
 
 export default function ContentEditorPage() {
@@ -117,6 +122,14 @@ export default function ContentEditorPage() {
   const linkedinVariant = item.variants?.find((v: any) => v.platform === 'LINKEDIN');
   const xVariant = item.variants?.find((v: any) => v.platform === 'X');
 
+  const visualReferences: any[] = Array.isArray(item.visualReferences)
+    ? item.visualReferences
+    : Array.isArray(linkedinVariant?.visualReferences)
+    ? linkedinVariant.visualReferences
+    : Array.isArray(xVariant?.visualReferences)
+    ? xVariant.visualReferences
+    : [];
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Back Link and Header */}
@@ -148,6 +161,77 @@ export default function ContentEditorPage() {
         </Link>
       </div>
 
+      {/* Recommended Visual References */}
+      {visualReferences.length > 0 && (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-3">
+          <div className="flex items-center justify-between border-b border-[#30363d] pb-2">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                Recommended Visual References ({visualReferences.length})
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-400">
+              Attach 1–2 official visuals to increase technical clarity & engagement
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            {visualReferences.map((visual: any, idx: number) => {
+              const getBadge = (type: string) => {
+                switch (type) {
+                  case 'architecture_diagram':
+                    return { label: 'Architecture Diagram', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30', icon: Layers };
+                  case 'product_screenshot':
+                    return { label: 'Product Screenshot', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30', icon: Monitor };
+                  case 'benchmark_chart':
+                    return { label: 'Benchmark Chart', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: BarChart3 };
+                  case 'official_image':
+                    return { label: 'Official Release Visual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: ImageIcon };
+                  default:
+                    return { label: 'Concept Diagram', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30', icon: Lightbulb };
+                }
+              };
+              const badge = getBadge(visual.type);
+              const BadgeIcon = badge.icon;
+
+              return (
+                <div
+                  key={idx}
+                  className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3.5 flex flex-col justify-between space-y-2 hover:border-zinc-500 transition-colors"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border flex items-center gap-1 font-semibold ${badge.color}`}>
+                        <BadgeIcon className="w-3 h-3" />
+                        {badge.label}
+                      </span>
+                      {visual.suggestedSourceUrl && (
+                        <a
+                          href={visual.suggestedSourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] font-mono text-emerald-400 hover:underline flex items-center gap-1"
+                        >
+                          Source <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
+                    <h4 className="text-xs font-semibold text-zinc-100">{visual.title}</h4>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">{visual.description}</p>
+                  </div>
+                  {visual.reasonWhyHelpful && (
+                    <div className="border-t border-[#21262d] pt-2 text-[10px] text-zinc-500 font-mono">
+                      <span className="text-zinc-400 font-semibold">Why it helps:</span> {visual.reasonWhyHelpful}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Side-by-Side Editor Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ================= LinkedIn Column ================= */}
@@ -164,9 +248,14 @@ export default function ContentEditorPage() {
                     Status: {linkedinVariant.status}
                   </span>
                 </div>
-                <span className="text-xs font-mono text-zinc-400">
-                  {linkedinText.length} / 1500 chars
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[11px] font-mono ${linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length >= 3 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length} paragraphs
+                  </span>
+                  <span className="text-xs font-mono text-zinc-400">
+                    {linkedinText.length} / 1500 chars
+                  </span>
+                </div>
               </div>
 
               {/* Quality Audit Scorecard */}
