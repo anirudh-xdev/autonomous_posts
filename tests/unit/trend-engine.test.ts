@@ -4,6 +4,7 @@ import {
   TrendNormalizer,
   TrendClusterer,
   TrendCandidate,
+  SignalDeduper,
   trendDiscoveryService,
 } from '@/packages/trend-engine';
 import { prisma, seedDatabase, trendRepository } from '@/packages/database';
@@ -17,33 +18,103 @@ describe('Phase 4: Trend Discovery & Scoring Engine', () => {
     await prisma.$disconnect();
   });
 
-  it('should compute transparent 5-factor scores and explain reasons', () => {
+  it('should compute transparent 7-factor scores according to the blueprint formula', () => {
     const scorer = new TrendScorer();
 
+    // developer_relevance * 0.25 + velocity * 0.20 + novelty * 0.15 + source_authority * 0.15 +
+    // cross_source * 0.10 + technical_depth * 0.10 + content_potential * 0.05
     const score = scorer.calculateScore({
-      freshnessScore: 9,
-      developerRelevanceScore: 10,
-      engagementScore: 9,
-      noveltyScore: 8,
-      credibilityScore: 9,
+      developerRelevance: 10,  // 10 * 0.25 = 2.5
+      velocity: 9,            // 9 * 0.20  = 1.8
+      novelty: 8,             // 8 * 0.15  = 1.2
+      sourceAuthority: 9,     // 9 * 0.15  = 1.35
+      crossSource: 9,         // 9 * 0.10  = 0.9
+      technicalDepth: 9,      // 9 * 0.10  = 0.9
+      contentPotential: 8,    // 8 * 0.05  = 0.4
+      // sum = 2.5 + 1.8 + 1.2 + 1.35 + 0.9 + 0.9 + 0.4 = 9.05 -> * 10 = 90.5
     });
 
-    // 9*0.2 + 10*0.25 + 9*0.2 + 8*0.15 + 9*0.2 = 1.8 + 2.5 + 1.8 + 1.2 + 1.8 = 9.1 -> 91
-    expect(score).toBe(91);
+    expect(score).toBe(90.5);
 
     const reason = scorer.generateScoreReason({
-      freshnessScore: 9,
-      developerRelevanceScore: 10,
-      engagementScore: 9,
-      noveltyScore: 8,
-      credibilityScore: 9,
-      totalScore: 91,
-      evidenceCount: 3,
+      developerRelevance: 10,
+      velocity: 9,
+      novelty: 8,
+      sourceAuthority: 9,
+      crossSource: 9,
+      technicalDepth: 9,
+      contentPotential: 8,
+      totalScore: 90.5,
+      evidenceCount: 4,
+      independentTierCount: 3,
     });
 
-    expect(reason).toContain('developer workflows');
-    expect(reason).toContain('primary sources');
-    expect(reason).toContain('Merged across 3 independent sources');
+    expect(reason).toContain('workflows');
+    expect(reason).toContain('primary AI research labs');
+    expect(reason).toContain('3 independent source tiers');
+  });
+
+  it('should deduplicate signals across 4 layers and generate deterministic SHA-256 hashes', () => {
+    const rawSignals = [
+      {
+        externalId: '1',
+        title: 'Anthropic Launches Model Context Protocol',
+        summary: 'MCP enables agents to connect to dev tools',
+        url: 'https://anthropic.com/news/mcp?utm_source=twitter&utm_medium=social',
+        canonicalUrl: '',
+        source: 'Anthropic Blog',
+        sourceType: 'PRIMARY' as const,
+        sourceTrustScore: 10.0,
+        engagement: {},
+        topics: ['mcp'],
+        hash: '',
+      },
+      {
+        externalId: '2',
+        title: 'Anthropic Launches Model Context Protocol', // Exact duplicate canonical URL + title
+        summary: 'MCP enables agents to connect to dev tools',
+        url: 'https://anthropic.com/news/mcp?fbclid=xyz&ref=hn',
+        canonicalUrl: '',
+        source: 'Aggregator',
+        sourceType: 'COMMUNITY' as const,
+        sourceTrustScore: 7.0,
+        engagement: {},
+        topics: ['mcp'],
+        hash: '',
+      },
+      {
+        externalId: '3',
+        title: 'Anthropic Launches Model Context Protocol Standard for Agents', // Title similarity > 0.8
+        summary: 'Discussion of MCP',
+        url: 'https://another-blog.com/mcp-announcement',
+        canonicalUrl: '',
+        source: 'Blog',
+        sourceType: 'DEVELOPER' as const,
+        sourceTrustScore: 8.5,
+        engagement: {},
+        topics: ['mcp'],
+        hash: '',
+      },
+      {
+        externalId: '4',
+        title: 'DeepSeek-V3 Architecture Breakthrough',
+        summary: 'DeepSeek releases new model with multi-head latent attention',
+        url: 'https://deepseek.com/v3',
+        canonicalUrl: '',
+        source: 'DeepSeek',
+        sourceType: 'PRIMARY' as const,
+        sourceTrustScore: 10.0,
+        engagement: {},
+        topics: ['models'],
+        hash: '',
+      },
+    ];
+
+    const deduplicated = SignalDeduper.deduplicateSignals(rawSignals);
+    expect(deduplicated.length).toBe(2);
+    expect(deduplicated[0].canonicalUrl).toBe('https://anthropic.com/news/mcp');
+    expect(deduplicated[0].hash).toBeDefined();
+    expect(deduplicated[1].title).toContain('DeepSeek-V3');
   });
 
   it('should canonicalize URLs and clean tracking query parameters', () => {
@@ -108,7 +179,7 @@ describe('Phase 4: Trend Discovery & Scoring Engine', () => {
     const mcpGroup = groups.find((g) => g.canonicalTitle.includes('Model Context Protocol'));
     expect(mcpGroup).toBeDefined();
     expect(mcpGroup?.evidences.length).toBe(2);
-    expect(mcpGroup?.score).toBeGreaterThan(90);
+    expect(mcpGroup?.score).toBeGreaterThanOrEqual(88);
   });
 
   it('should run full discovery pipeline and save clustered trends with multiple evidences', async () => {

@@ -28,8 +28,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, contentItemId, result });
-  } catch (err) {
+  } catch (err: any) {
     logger.error('API POST /api/content/generate failed', err);
-    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
+    const status = err?.statusCode || 500;
+    const message = err?.message || String(err);
+    return NextResponse.json({ success: false, error: message }, { status });
   }
 }

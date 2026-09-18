@@ -7,7 +7,7 @@ describe('Phase 1: Configuration & Foundation', () => {
     expect(env.PUBLISHING_MODE).toBe('APPROVAL_REQUIRED');
     expect(env.MIN_TREND_SCORE).toBe(70);
     expect(env.MIN_QUALITY_SCORE).toBe(85);
-    expect(['mock', 'openrouter', 'gemini', 'openai', 'anthropic']).toContain(env.LLM_PROVIDER);
+    expect(['mock', 'openrouter', 'gemini', 'openai', 'anthropic', 'huggingface']).toContain(env.LLM_PROVIDER);
   });
 
   it('should properly encrypt and decrypt sensitive secrets with AES-256-GCM', () => {
@@ -24,7 +24,9 @@ describe('Phase 1: Configuration & Foundation', () => {
   it('should fail decryption when payload is tampered', () => {
     const rawSecret = 'secret-token';
     const encrypted = encryptSecret(rawSecret);
-    const tampered = encrypted.slice(0, -2) + 'ff';
+    const parts = encrypted.split(':');
+    parts[1] = '00'.repeat(16); // Tamper the 16-byte authTag
+    const tampered = parts.join(':');
 
     expect(() => decryptSecret(tampered)).toThrow();
   });

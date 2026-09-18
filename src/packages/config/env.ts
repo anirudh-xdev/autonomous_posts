@@ -16,9 +16,15 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
 
   // LLM Provider
-  LLM_PROVIDER: z.enum(['mock', 'openai', 'anthropic', 'gemini', 'openrouter']).default('mock'),
+  LLM_PROVIDER: z.enum(['mock', 'openai', 'anthropic', 'gemini', 'openrouter', 'huggingface']).default('mock'),
   LLM_API_KEY: z.string().optional(),
   LLM_MODEL: z.string().optional(),
+  HUGGINGFACE_API_KEY: z.string().optional(),
+  HF_TOKEN: z.string().optional(),
+  HF_MODEL: z.string().default('Qwen/Qwen2.5-72B-Instruct'),
+
+  // Image Generation Provider
+  IMAGE_PROVIDER: z.enum(['auto', 'huggingface', 'pollinations', 'mock']).default('auto'),
 
   // Social Integrations - LinkedIn
   LINKEDIN_CLIENT_ID: z.string().optional(),

@@ -37,14 +37,25 @@ model Trend {
   slug                    String          @unique
   summary                 String
   status                  TrendStatus     @default(DISCOVERED)
+  whatChanged             String?
+  recommendedAngle        String?
+  confidence              Float           @default(85)
   
+  // Transparent 7-Factor Scoring (0-100 normalized)
   score                   Float           @default(0)
-  freshnessScore          Float           @default(0)
-  developerRelevanceScore Float           @default(0)
-  engagementScore         Float           @default(0)
-  noveltyScore            Float           @default(0)
-  credibilityScore        Float           @default(0)
+  developerRelevanceScore Float           @default(0) // 25% (0-10)
+  velocityScore           Float           @default(0) // 20% (0-10)
+  noveltyScore            Float           @default(0) // 15% (0-10)
+  sourceAuthorityScore    Float           @default(0) // 15% (0-10)
+  crossSourceScore        Float           @default(0) // 10% (0-10)
+  technicalDepthScore     Float           @default(0) // 10% (0-10)
+  contentPotentialScore   Float           @default(0) // 5% (0-10)
   scoreReason             String?
+  
+  // Legacy / 5-Factor scoring backwards compatibility
+  freshnessScore          Float           @default(0)
+  engagementScore         Float           @default(0)
+  credibilityScore        Float           @default(0)
   
   firstDetectedAt         DateTime        @default(now())
   lastDetectedAt          DateTime        @default(now())
@@ -64,29 +75,45 @@ model Trend {
 }
 
 model TrendSource {
-  id           String          @id @default(uuid())
-  name         String          @unique
-  adapterType  String
-  config       Json            @default("{}")
-  enabled      Boolean         @default(true)
-  lastPolledAt DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id               String          @id @default(uuid())
+  name             String          @unique
+  type             String          @default("DEVELOPER") // PRIMARY, RESEARCH, DEVELOPER, COMMUNITY, NEWS
+  adapterType      String
+  url              String?
+  apiUrl           String?
+  config           Json            @default("{}")
+  enabled          Boolean         @default(true)
+  priority         Int             @default(1)
+  trustScore       Float           @default(8.0) // 0 - 10
+  topics           Json            @default("[]")
+  collectionMethod String          @default("RSS") // RSS, HTTP_API, GITHUB_API, HN_API, REDDIT_API, WEB_SEARCH
+  refreshInterval  Int             @default(180) // in minutes
+  lastPolledAt     DateTime?
+  lastCheckedAt    DateTime?
+  lastSuccessAt    DateTime?
+  lastError        String?
+  failureCount     Int             @default(0)
+  itemsFound       Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   
-  evidences    TrendEvidence[]
+  evidences        TrendEvidence[]
 }
 
 model TrendTopic {
-  id        String         @id @default(uuid())
-  name      String         @unique
-  slug      String         @unique
-  category  String         @default("general")
-  enabled   Boolean        @default(true)
-  weight    Float          @default(1.0)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id              String         @id @default(uuid())
+  name            String         @unique
+  slug            String         @unique
+  category        String         @default("general")
+  keywords        Json           @default("[]")
+  relatedKeywords Json           @default("[]")
+  enabled         Boolean        @default(true)
+  priority        Int            @default(1)
+  weight          Float          @default(1.0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  trends    TrendToTopic[]
+  trends          TrendToTopic[]
 }
 
 model TrendToTopic {
@@ -104,7 +131,10 @@ model TrendEvidence {
   trendId     String
   sourceId    String
   sourceName  String
+  sourceType  String      @default("DEVELOPER") // PRIMARY, RESEARCH, DEVELOPER, COMMUNITY, NEWS
   sourceUrl   String
+  externalId  String?
+  hash        String?     // SHA256 of canonical URL + title for idempotency
   rawTitle    String
   snippet     String?
   author      String?
@@ -117,6 +147,8 @@ model TrendEvidence {
 
   @@index([trendId])
   @@index([sourceUrl])
+  @@index([hash])
+  @@index([externalId])
 }
 
 model ResearchReport {
@@ -143,6 +175,7 @@ model ContentItem {
   status           ContentStatus   @default(DRAFT)
   scheduledAt      DateTime?
   publishedAt      DateTime?
+  imageUrl         String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -167,6 +200,7 @@ model ContentVariant {
   version        Int             @default(1)
   promptVersion  String          @default("v1")
   model          String          @default("mock")
+  imageUrl       String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 

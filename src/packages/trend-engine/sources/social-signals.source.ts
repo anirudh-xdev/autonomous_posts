@@ -61,6 +61,8 @@ export class SocialSignalsSource implements TrendSource {
             summary: `Live trending technical discussion submitted by @${hit.author} (${points} community points).`,
             sourceUrl: url,
             sourceName: 'Developer Social Signals',
+            sourceType: 'COMMUNITY',
+            sourceAuthorityScore: 7.5,
             publishedAt: new Date(hit.created_at),
             rawScore: points,
             author: `@${hit.author}`,
@@ -69,7 +71,7 @@ export class SocialSignalsSource implements TrendSource {
             engagementScore: Math.min(10, Math.max(6, points / 40)),
             developerRelevanceScore: 9.5,
             noveltyScore: 9.0,
-            credibilityScore: 9.1,
+            credibilityScore: 7.5,
             totalScore: 0,
           });
 

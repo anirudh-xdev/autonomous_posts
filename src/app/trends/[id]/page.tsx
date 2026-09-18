@@ -15,6 +15,8 @@ import {
   Clock,
   Send,
   Bookmark,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 
 export default function TrendDetailPage() {
@@ -26,6 +28,7 @@ export default function TrendDetailPage() {
   const [loading, setLoading] = useState(true);
   const [researching, setResearching] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchTrend = async () => {
     try {
@@ -48,14 +51,18 @@ export default function TrendDetailPage() {
 
   const handleRunResearch = async () => {
     setResearching(true);
+    setErrorMsg(null);
     try {
       const res = await fetch(`/api/trends/${id}/research`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         await fetchTrend();
+      } else {
+        setErrorMsg(data.error || 'Research failed to complete');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Research failed', err);
+      setErrorMsg(err?.message || 'Research request failed');
     } finally {
       setResearching(false);
     }
@@ -84,6 +91,7 @@ export default function TrendDetailPage() {
 
   const handleGenerateContent = async () => {
     setGenerating(true);
+    setErrorMsg(null);
     try {
       const res = await fetch('/api/content/generate', {
         method: 'POST',
@@ -93,9 +101,12 @@ export default function TrendDetailPage() {
       const data = await res.json();
       if (data.success && data.contentItemId) {
         router.push(`/content/${data.contentItemId}`);
+      } else {
+        setErrorMsg(data.error || 'Content generation failed');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Content generation failed', err);
+      setErrorMsg(err?.message || 'Content generation request failed');
     } finally {
       setGenerating(false);
     }
@@ -130,6 +141,30 @@ export default function TrendDetailPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Trends
         </Link>
       </div>
+
+      {/* Error Alert Banner */}
+      {errorMsg && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-xs font-mono font-bold text-red-400 uppercase tracking-wider">
+                Action Error
+              </h4>
+              <p className="text-xs text-zinc-300 leading-relaxed font-mono">
+                {errorMsg}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setErrorMsg(null)}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors p-1"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Header Card */}
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 space-y-4">

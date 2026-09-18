@@ -20,6 +20,9 @@ import {
   BarChart3,
   Monitor,
   Lightbulb,
+  Wand2,
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function ContentEditorPage() {
@@ -37,6 +40,11 @@ export default function ContentEditorPage() {
   const [savingVariantId, setSavingVariantId] = useState<string | null>(null);
   const [publishingVariantId, setPublishingVariantId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Free AI Image Generation states
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [customImagePrompt, setCustomImagePrompt] = useState('');
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const fetchItem = async () => {
     try {
@@ -103,6 +111,30 @@ export default function ContentEditorPage() {
     }
   };
 
+  const handleGenerateImage = async () => {
+    setGeneratingImage(true);
+    setImageError(null);
+    try {
+      const res = await fetch(`/api/content/${id}/generate-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customPrompt: customImagePrompt || undefined }),
+      });
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        setItem((prev: any) => ({ ...prev, imageUrl: data.imageUrl }));
+        setStatusMessage(`AI Visual successfully generated with ${data.model}!`);
+      } else {
+        setImageError(data.error || 'Failed to generate visual image');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setImageError(err?.message || 'Network error generating image');
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto py-12 text-center font-mono text-sm text-zinc-500">
@@ -161,76 +193,181 @@ export default function ContentEditorPage() {
         </Link>
       </div>
 
-      {/* Recommended Visual References */}
-      {visualReferences.length > 0 && (
-        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-3">
-          <div className="flex items-center justify-between border-b border-[#30363d] pb-2">
-            <div className="flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                Recommended Visual References ({visualReferences.length})
-              </h3>
-            </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              Attach 1–2 official visuals to increase technical clarity & engagement
+      {/* Visual & AI Image Studio */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#30363d] pb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+              Visual & AI Image Studio
+            </h3>
+            <span className="text-[10px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">
+              FLUX.1-schnell Free Serverless
             </span>
           </div>
+          <span className="text-[11px] font-mono text-zinc-400">
+            Generate high-resolution (1200×630) technical diagrams & cards for LinkedIn and X
+          </span>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            {visualReferences.map((visual: any, idx: number) => {
-              const getBadge = (type: string) => {
-                switch (type) {
-                  case 'architecture_diagram':
-                    return { label: 'Architecture Diagram', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30', icon: Layers };
-                  case 'product_screenshot':
-                    return { label: 'Product Screenshot', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30', icon: Monitor };
-                  case 'benchmark_chart':
-                    return { label: 'Benchmark Chart', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: BarChart3 };
-                  case 'official_image':
-                    return { label: 'Official Release Visual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: ImageIcon };
-                  default:
-                    return { label: 'Concept Diagram', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30', icon: Lightbulb };
-                }
-              };
-              const badge = getBadge(visual.type);
-              const BadgeIcon = badge.icon;
+        {/* Error Alert if Image Generation Fails */}
+        {imageError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs font-mono text-red-300 flex items-center justify-between">
+            <span>{imageError}</span>
+            <button onClick={() => setImageError(null)} className="text-zinc-500 hover:text-zinc-300">
+              ✕
+            </button>
+          </div>
+        )}
 
-              return (
-                <div
-                  key={idx}
-                  className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3.5 flex flex-col justify-between space-y-2 hover:border-zinc-500 transition-colors"
-                >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border flex items-center gap-1 font-semibold ${badge.color}`}>
-                        <BadgeIcon className="w-3 h-3" />
-                        {badge.label}
-                      </span>
-                      {visual.suggestedSourceUrl && (
-                        <a
-                          href={visual.suggestedSourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[11px] font-mono text-emerald-400 hover:underline flex items-center gap-1"
-                        >
-                          Source <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      )}
-                    </div>
-                    <h4 className="text-xs font-semibold text-zinc-100">{visual.title}</h4>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">{visual.description}</p>
-                  </div>
-                  {visual.reasonWhyHelpful && (
-                    <div className="border-t border-[#21262d] pt-2 text-[10px] text-zinc-500 font-mono">
-                      <span className="text-zinc-400 font-semibold">Why it helps:</span> {visual.reasonWhyHelpful}
-                    </div>
-                  )}
+        {/* Generated Image Preview or Generator Input */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {item?.imageUrl ? (
+            <div className="lg:col-span-6 space-y-2">
+              <div className="relative group rounded-lg overflow-hidden border border-[#30363d] bg-[#0d1117]">
+                <img
+                  src={item.imageUrl}
+                  alt="Generated Post Visual"
+                  className="w-full h-auto object-cover max-h-64 rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <a
+                    href={item.imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-zinc-800/90 hover:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-md font-mono flex items-center gap-1.5 border border-zinc-600"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Full Size
+                  </a>
+                  <a
+                    href={item.imageUrl}
+                    download="post-visual.png"
+                    className="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-mono flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
                 </div>
-              );
-            })}
+              </div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                <span>Static Asset: {item.imageUrl}</span>
+                <span className="text-emerald-400 font-medium">Ready for Publishing</span>
+              </div>
+            </div>
+          ) : (
+            <div className="lg:col-span-6 border-2 border-dashed border-[#30363d] rounded-lg p-6 flex flex-col items-center justify-center text-center space-y-2 bg-[#0d1117]/50 min-h-[160px]">
+              <Wand2 className="w-8 h-8 text-zinc-600" />
+              <p className="text-xs font-mono text-zinc-400">No visual generated for this post yet.</p>
+              <p className="text-[11px] text-zinc-500">
+                Click generate below to synthesize a tailored technical diagram using FLUX.1.
+              </p>
+            </div>
+          )}
+
+          {/* Generator Controls */}
+          <div className="lg:col-span-6 space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-zinc-400 block">
+                Visual Prompt Customization (Optional)
+              </label>
+              <input
+                type="text"
+                value={customImagePrompt}
+                onChange={(e) => setCustomImagePrompt(e.target.value)}
+                placeholder={`e.g. Modern dark blueprint diagram of ${item.trend?.title || 'system architecture'}`}
+                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-zinc-200 font-mono focus:outline-none focus:border-purple-500"
+              />
+              <span className="text-[10px] text-zinc-500 block font-mono">
+                Leave blank to automatically synthesize an architecture diagram from research findings.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={handleGenerateImage}
+                disabled={generatingImage}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-mono font-medium transition-all shadow-md shadow-purple-950/30 disabled:opacity-50"
+              >
+                {generatingImage ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Generating with FLUX...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    {item?.imageUrl ? 'Regenerate Free AI Visual' : 'Generate Free AI Visual'}
+                  </>
+                )}
+              </button>
+              <span className="text-[10px] font-mono text-zinc-500">
+                Zero Cost • 1200×630 Card
+              </span>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Recommended Visual References from Research */}
+        {visualReferences.length > 0 && (
+          <div className="border-t border-[#30363d] pt-3 space-y-2">
+            <h4 className="text-[11px] font-mono uppercase text-zinc-400 font-semibold">
+              Recommended Architecture & Benchmark References ({visualReferences.length})
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {visualReferences.map((visual: any, idx: number) => {
+                const getBadge = (type: string) => {
+                  switch (type) {
+                    case 'architecture_diagram':
+                      return { label: 'Architecture Diagram', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30', icon: Layers };
+                    case 'product_screenshot':
+                      return { label: 'Product Screenshot', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30', icon: Monitor };
+                    case 'benchmark_chart':
+                      return { label: 'Benchmark Chart', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: BarChart3 };
+                    case 'official_image':
+                      return { label: 'Official Release Visual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: ImageIcon };
+                    default:
+                      return { label: 'Concept Diagram', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30', icon: Lightbulb };
+                  }
+                };
+                const badge = getBadge(visual.type);
+                const BadgeIcon = badge.icon;
+
+                return (
+                  <div
+                    key={idx}
+                    className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3 flex flex-col justify-between space-y-1.5 hover:border-zinc-500 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border flex items-center gap-1 font-semibold ${badge.color}`}>
+                          <BadgeIcon className="w-3 h-3" />
+                          {badge.label}
+                        </span>
+                        {visual.suggestedSourceUrl && (
+                          <a
+                            href={visual.suggestedSourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] font-mono text-emerald-400 hover:underline flex items-center gap-1"
+                          >
+                            Source <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        )}
+                      </div>
+                      <h4 className="text-xs font-semibold text-zinc-100">{visual.title}</h4>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed">{visual.description}</p>
+                    </div>
+                    {visual.reasonWhyHelpful && (
+                      <div className="border-t border-[#21262d] pt-1.5 text-[10px] text-zinc-500 font-mono">
+                        <span className="text-zinc-400 font-semibold">Why it helps:</span> {visual.reasonWhyHelpful}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Side-by-Side Editor Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -84,7 +84,11 @@ export async function seedDatabase() {
     await prisma.trendTopic.upsert({
       where: { slug: topic.slug },
       update: { weight: topic.weight, category: topic.category, enabled: true },
-      create: topic,
+      create: {
+        ...topic,
+        keywords: '[]',
+        relatedKeywords: '[]',
+      },
     });
   }
   logger.info(`✅ Seeded ${INITIAL_TOPICS.length} trend topics`);

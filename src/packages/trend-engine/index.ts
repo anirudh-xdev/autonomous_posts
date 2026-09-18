@@ -9,4 +9,8 @@ export * from './sources/rss.source';
 export * from './sources/web-search.source';
 export * from './sources/social-signals.source';
 export * from './sources/engineer-profiles.source';
+export * from './sources/source-registry';
+export * from './topics/topic-registry';
+export * from './deduplication/signal-deduper';
+export * from './analyzer/ai-trend-analyzer';
 export * from './trend-discovery.service';

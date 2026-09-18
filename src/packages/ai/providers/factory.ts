@@ -4,6 +4,7 @@ import { OpenAIProvider } from './openai.provider';
 import { AnthropicProvider } from './anthropic.provider';
 import { GoogleGeminiProvider } from './gemini.provider';
 import { OpenRouterProvider } from './openrouter.provider';
+import { HuggingFaceProvider } from './huggingface.provider';
 import { env, logger } from '@/packages/config';
 
 export class LLMProviderFactory {
@@ -17,6 +18,13 @@ export class LLMProviderFactory {
     const selected = providerType || env.LLM_PROVIDER;
 
     switch (selected) {
+      case 'huggingface':
+        if (!process.env.HUGGINGFACE_API_KEY && !process.env.HF_TOKEN && !process.env.LLM_API_KEY) {
+          if (process.env.NODE_ENV === 'test') return new MockLLMProvider();
+          throw new Error('Hugging Face selected but no API key found. Please provide HUGGINGFACE_API_KEY or HF_TOKEN in your .env file.');
+        }
+        return new HuggingFaceProvider();
+
       case 'openrouter':
         if (!process.env.LLM_API_KEY && !process.env.OPENROUTER_API_KEY) {
           if (process.env.NODE_ENV === 'test') return new MockLLMProvider();

@@ -6,20 +6,25 @@ export class TechNewsRSSSource implements TrendSource {
   public readonly name = 'Tech & AI Lab RSS Feeds';
   public readonly adapterType = 'rss';
 
-  private static LIVE_FEEDS = [
-    { name: 'Hugging Face Daily Papers', url: 'https://huggingface.co/papers/feed.xml' },
-    { name: 'Hugging Face Blog', url: 'https://huggingface.co/blog/feed.xml' },
-    { name: 'Google DeepMind Research', url: 'https://deepmind.google/blog/rss.xml' },
-    { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/' },
-    { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml' },
-    { name: 'Mistral AI News', url: 'https://mistral.ai/news/index.xml' },
-    { name: 'ArXiv CS.AI Research', url: 'https://rss.arxiv.org/rss/cs.AI' },
-    { name: 'ArXiv CS.CL (Language & LLMs)', url: 'https://rss.arxiv.org/rss/cs.CL' },
-    { name: 'ArXiv CS.LG (Machine Learning)', url: 'https://rss.arxiv.org/rss/cs.LG' },
-    { name: 'vLLM Project Blog', url: 'https://blog.vllm.ai/feed.xml' },
-    { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
-    { name: 'Ars Technica Tech Lab', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
-    { name: 'MIT Tech Review AI', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed/' },
+  private static LIVE_FEEDS: Array<{
+    name: string;
+    url: string;
+    sourceType: 'PRIMARY' | 'RESEARCH' | 'NEWS';
+    trustScore: number;
+  }> = [
+    { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml', sourceType: 'PRIMARY', trustScore: 10.0 },
+    { name: 'Google DeepMind Research', url: 'https://deepmind.google/blog/rss.xml', sourceType: 'PRIMARY', trustScore: 10.0 },
+    { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/', sourceType: 'PRIMARY', trustScore: 10.0 },
+    { name: 'Mistral AI News', url: 'https://mistral.ai/news/index.xml', sourceType: 'PRIMARY', trustScore: 10.0 },
+    { name: 'vLLM Project Blog', url: 'https://blog.vllm.ai/feed.xml', sourceType: 'PRIMARY', trustScore: 9.6 },
+    { name: 'Hugging Face Blog', url: 'https://huggingface.co/blog/feed.xml', sourceType: 'PRIMARY', trustScore: 9.8 },
+    { name: 'Hugging Face Daily Papers', url: 'https://huggingface.co/papers/feed.xml', sourceType: 'RESEARCH', trustScore: 9.4 },
+    { name: 'ArXiv CS.AI Research', url: 'https://rss.arxiv.org/rss/cs.AI', sourceType: 'RESEARCH', trustScore: 9.2 },
+    { name: 'ArXiv CS.CL (Language & LLMs)', url: 'https://rss.arxiv.org/rss/cs.CL', sourceType: 'RESEARCH', trustScore: 9.2 },
+    { name: 'ArXiv CS.LG (Machine Learning)', url: 'https://rss.arxiv.org/rss/cs.LG', sourceType: 'RESEARCH', trustScore: 9.2 },
+    { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/', sourceType: 'NEWS', trustScore: 8.5 },
+    { name: 'Ars Technica Tech Lab', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab', sourceType: 'NEWS', trustScore: 8.8 },
+    { name: 'MIT Tech Review AI', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed/', sourceType: 'NEWS', trustScore: 8.9 },
   ];
 
   async healthCheck(): Promise<boolean> {
@@ -58,7 +63,7 @@ export class TechNewsRSSSource implements TrendSource {
           if (!res.ok) return;
 
           const xml = await res.text();
-          const parsed = this.parseXmlFeed(xml, feed.name);
+          const parsed = this.parseXmlFeed(xml, feed.name, feed.sourceType, feed.trustScore);
           candidates.push(...parsed.slice(0, 3));
         } catch (err) {
           logger.debug(`TechNewsRSSSource: failed to fetch feed [${feed.name}]`, { error: String(err) });
@@ -70,12 +75,17 @@ export class TechNewsRSSSource implements TrendSource {
     return candidates.slice(0, limit);
   }
 
-  private parseXmlFeed(xml: string, feedName: string): TrendCandidate[] {
+  private parseXmlFeed(
+    xml: string,
+    feedName: string,
+    sourceType: 'PRIMARY' | 'RESEARCH' | 'NEWS' = 'PRIMARY',
+    trustScore = 9.5
+  ): TrendCandidate[] {
     const candidates: TrendCandidate[] = [];
     const itemRegex = /<(?:item|entry)[\s>]([\s\S]*?)<\/(?:item|entry)>/gi;
     let match;
 
-    while ((match = itemRegex.exec(xml)) !== null) {
+    while ((match = itemRegex.exec(xml)) !== null && candidates.length < 10) {
       const content = match[1];
 
       // Extract title
@@ -109,13 +119,15 @@ export class TechNewsRSSSource implements TrendSource {
           summary: summary || title,
           sourceUrl: url,
           sourceName: feedName,
+          sourceType,
+          sourceAuthorityScore: trustScore,
           publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
           topics,
           freshnessScore: 9.6,
           engagementScore: 9.1,
           developerRelevanceScore: 9.6,
           noveltyScore: 9.0,
-          credibilityScore: 9.8,
+          credibilityScore: trustScore,
           totalScore: 0,
         });
       }

@@ -113,6 +113,8 @@ export class WebSearchTrendSource implements TrendSource {
                 summary: `Live AI technology news reported by ${sourceName}.`,
                 sourceUrl: url,
                 sourceName: `Web Search (${sourceName})`,
+                sourceType: 'NEWS',
+                sourceAuthorityScore: 8.2,
                 publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
                 author: sourceName,
                 topics,
@@ -120,7 +122,7 @@ export class WebSearchTrendSource implements TrendSource {
                 engagementScore: 9.0,
                 developerRelevanceScore: 9.4,
                 noveltyScore: 9.2,
-                credibilityScore: 9.3,
+                credibilityScore: 8.2,
                 totalScore: 0,
               });
 

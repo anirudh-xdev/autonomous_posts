@@ -9,8 +9,10 @@ export async function POST(
   try {
     const report = await researchAgent.researchTrend(params.id, { forceRefresh: true });
     return NextResponse.json({ success: true, report });
-  } catch (err) {
+  } catch (err: any) {
     logger.error(`API research failed for trend ${params.id}`, err);
-    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
+    const status = err?.statusCode || 500;
+    const message = err?.message || String(err);
+    return NextResponse.json({ success: false, error: message }, { status });
   }
 }

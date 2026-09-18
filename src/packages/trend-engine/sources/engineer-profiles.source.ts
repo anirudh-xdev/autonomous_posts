@@ -110,6 +110,9 @@ export class EngineerProfilesSource implements TrendSource {
           summary: summary || cleanTitle,
           sourceUrl: url,
           sourceName: `${authorName} Notes`,
+          sourceType: 'DEVELOPER',
+          sourceAuthorityScore: 9.3,
+          technicalDepthScore: 9.5,
           publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
           author: authorName,
           topics,
@@ -117,7 +120,7 @@ export class EngineerProfilesSource implements TrendSource {
           engagementScore: 9.4,
           developerRelevanceScore: 9.8,
           noveltyScore: 9.2,
-          credibilityScore: 9.9,
+          credibilityScore: 9.3,
           totalScore: 0,
         });
       }

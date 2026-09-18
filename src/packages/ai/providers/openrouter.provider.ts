@@ -176,7 +176,16 @@ export class OpenRouterProvider implements LLMProvider {
     if (!response.ok) {
       const errText = await response.text();
       logger.error('OpenRouter text generation failed', { status: response.status, body: errText });
-      throw new ExternalApiError('OpenRouter', `HTTP ${response.status}: ${errText}`, response.status);
+      let friendlyMessage = `HTTP ${response.status}: ${errText}`;
+      if (response.status === 429) {
+        try {
+          const parsed = JSON.parse(errText);
+          friendlyMessage = `OpenRouter Free Limit Reached: ${parsed.error?.message || '50 free model requests per day limit exceeded.'} (Resets at 00:00 UTC). Add credits to your OpenRouter account to unlock 1,000 requests/day, or configure GEMINI_API_KEY in .env.`;
+        } catch {
+          friendlyMessage = `OpenRouter Rate Limit Exceeded (HTTP 429). Please wait for the daily reset or add credits.`;
+        }
+      }
+      throw new ExternalApiError('OpenRouter', friendlyMessage, response.status);
     }
 
     const json = (await response.json()) as {
@@ -259,7 +268,16 @@ export class OpenRouterProvider implements LLMProvider {
     if (!response.ok) {
       const errText = await response.text();
       logger.error('OpenRouter structured generation failed', { status: response.status, body: errText });
-      throw new ExternalApiError('OpenRouter', `HTTP ${response.status}: ${errText}`, response.status);
+      let friendlyMessage = `HTTP ${response.status}: ${errText}`;
+      if (response.status === 429) {
+        try {
+          const parsed = JSON.parse(errText);
+          friendlyMessage = `OpenRouter Free Limit Reached: ${parsed.error?.message || '50 free model requests per day limit exceeded.'} (Resets at 00:00 UTC). Add credits to your OpenRouter account to unlock 1,000 requests/day, or configure GEMINI_API_KEY in .env.`;
+        } catch {
+          friendlyMessage = `OpenRouter Rate Limit Exceeded (HTTP 429). Please wait for the daily reset or add credits.`;
+        }
+      }
+      throw new ExternalApiError('OpenRouter', friendlyMessage, response.status);
     }
 
     const json = (await response.json()) as {

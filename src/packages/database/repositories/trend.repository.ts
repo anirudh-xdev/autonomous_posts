@@ -6,17 +6,28 @@ export interface CreateTrendInput {
   slug: string;
   summary: string;
   score: number;
-  freshnessScore: number;
   developerRelevanceScore: number;
-  engagementScore: number;
+  velocityScore?: number;
   noveltyScore: number;
-  credibilityScore: number;
+  sourceAuthorityScore?: number;
+  crossSourceScore?: number;
+  technicalDepthScore?: number;
+  contentPotentialScore?: number;
+  confidence?: number;
+  whatChanged?: string;
+  recommendedAngle?: string;
   scoreReason?: string;
+  freshnessScore?: number;
+  engagementScore?: number;
+  credibilityScore?: number;
   topics?: string[];
   evidences?: Array<{
     sourceId: string;
     sourceName: string;
+    sourceType?: string;
     sourceUrl: string;
+    externalId?: string;
+    hash?: string;
     rawTitle: string;
     snippet?: string;
     author?: string;
@@ -127,13 +138,25 @@ export class TrendRepository {
     });
 
     if (existing) {
-      // Update score if new candidate has higher engagement or freshness
+      // Update score if new candidate has higher score or freshness
       const updated = await prisma.trend.update({
         where: { id: existing.id },
         data: {
           score: Math.max(existing.score, input.score),
-          freshnessScore: Math.max(existing.freshnessScore, input.freshnessScore),
-          engagementScore: Math.max(existing.engagementScore, input.engagementScore),
+          developerRelevanceScore: Math.max(existing.developerRelevanceScore, input.developerRelevanceScore),
+          velocityScore: Math.max(existing.velocityScore, input.velocityScore || 0),
+          noveltyScore: Math.max(existing.noveltyScore, input.noveltyScore),
+          sourceAuthorityScore: Math.max(existing.sourceAuthorityScore, input.sourceAuthorityScore || 0),
+          crossSourceScore: Math.max(existing.crossSourceScore, input.crossSourceScore || 0),
+          technicalDepthScore: Math.max(existing.technicalDepthScore, input.technicalDepthScore || 0),
+          contentPotentialScore: Math.max(existing.contentPotentialScore, input.contentPotentialScore || 0),
+          confidence: input.confidence ?? existing.confidence,
+          whatChanged: input.whatChanged || existing.whatChanged,
+          recommendedAngle: input.recommendedAngle || existing.recommendedAngle,
+          freshnessScore: Math.max(existing.freshnessScore, input.freshnessScore || input.velocityScore || 0),
+          engagementScore: Math.max(existing.engagementScore, input.engagementScore || 0),
+          credibilityScore: Math.max(existing.credibilityScore, input.credibilityScore || input.sourceAuthorityScore || 0),
+          scoreReason: input.scoreReason || existing.scoreReason,
           lastDetectedAt: new Date(),
         },
       });
@@ -141,12 +164,22 @@ export class TrendRepository {
       // Add any new evidences
       if (input.evidences && input.evidences.length > 0) {
         for (const ev of input.evidences) {
-          const evExists = existing.evidences.some((e) => e.sourceUrl === ev.sourceUrl);
+          const evExists = existing.evidences.some((e) => e.sourceUrl === ev.sourceUrl || (ev.hash && e.hash === ev.hash));
           if (!evExists) {
             await prisma.trendEvidence.create({
               data: {
                 trendId: existing.id,
-                ...ev,
+                sourceId: ev.sourceId,
+                sourceName: ev.sourceName,
+                sourceType: ev.sourceType || 'DEVELOPER',
+                sourceUrl: ev.sourceUrl,
+                externalId: ev.externalId,
+                hash: ev.hash,
+                rawTitle: ev.rawTitle,
+                snippet: ev.snippet,
+                author: ev.author,
+                rawScore: ev.rawScore,
+                publishedAt: ev.publishedAt,
               },
             });
           }
@@ -164,12 +197,20 @@ export class TrendRepository {
           slug: input.slug,
           summary: input.summary,
           score: input.score,
-          freshnessScore: input.freshnessScore,
           developerRelevanceScore: input.developerRelevanceScore,
-          engagementScore: input.engagementScore,
+          velocityScore: input.velocityScore ?? input.freshnessScore ?? 7.0,
           noveltyScore: input.noveltyScore,
-          credibilityScore: input.credibilityScore,
+          sourceAuthorityScore: input.sourceAuthorityScore ?? input.credibilityScore ?? 8.0,
+          crossSourceScore: input.crossSourceScore ?? 7.0,
+          technicalDepthScore: input.technicalDepthScore ?? input.developerRelevanceScore,
+          contentPotentialScore: input.contentPotentialScore ?? 8.0,
+          confidence: input.confidence ?? 88,
+          whatChanged: input.whatChanged,
+          recommendedAngle: input.recommendedAngle,
           scoreReason: input.scoreReason,
+          freshnessScore: input.freshnessScore ?? input.velocityScore ?? 7.0,
+          engagementScore: input.engagementScore ?? 7.0,
+          credibilityScore: input.credibilityScore ?? input.sourceAuthorityScore ?? 8.0,
         },
       });
 
@@ -178,7 +219,17 @@ export class TrendRepository {
           await tx.trendEvidence.create({
             data: {
               trendId: trend.id,
-              ...ev,
+              sourceId: ev.sourceId,
+              sourceName: ev.sourceName,
+              sourceType: ev.sourceType || 'DEVELOPER',
+              sourceUrl: ev.sourceUrl,
+              externalId: ev.externalId,
+              hash: ev.hash,
+              rawTitle: ev.rawTitle,
+              snippet: ev.snippet,
+              author: ev.author,
+              rawScore: ev.rawScore,
+              publishedAt: ev.publishedAt,
             },
           });
         }

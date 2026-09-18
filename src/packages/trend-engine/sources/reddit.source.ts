@@ -68,6 +68,8 @@ export class RedditSource implements TrendSource {
               summary: d.selftext ? d.selftext.slice(0, 200) + '...' : `Discussion in r/${sub} with ${d.score} upvotes.`,
               sourceUrl,
               sourceName: `Reddit r/${sub}`,
+              sourceType: 'COMMUNITY',
+              sourceAuthorityScore: 7.5,
               publishedAt: new Date(d.created_utc * 1000),
               rawScore: d.score,
               author: d.author,
@@ -76,7 +78,7 @@ export class RedditSource implements TrendSource {
               engagementScore: Math.min(10, Math.max(5, d.score / 60)),
               developerRelevanceScore: 8.8,
               noveltyScore: 8.4,
-              credibilityScore: 8.5,
+              credibilityScore: 7.5,
               totalScore: 0,
             });
 

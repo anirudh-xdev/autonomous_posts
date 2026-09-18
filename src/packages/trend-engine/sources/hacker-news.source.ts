@@ -62,6 +62,9 @@ export class HackerNewsSource implements TrendSource {
               summary: `High-signal community discussion on Hacker News by ${hit.author || 'developer'} with ${rawScore} points.`,
               sourceUrl: url,
               sourceName: 'Hacker News',
+              sourceType: 'DEVELOPER',
+              sourceAuthorityScore: 8.8,
+              technicalDepthScore: 8.8,
               publishedAt: new Date(hit.created_at),
               rawScore,
               author: hit.author,
@@ -70,7 +73,7 @@ export class HackerNewsSource implements TrendSource {
               engagementScore: Math.min(10, Math.max(5, rawScore / 50)),
               developerRelevanceScore: 9.6,
               noveltyScore: 9.0,
-              credibilityScore: 9.2,
+              credibilityScore: 8.8,
               totalScore: 0,
             });
 
@@ -116,6 +119,9 @@ export class HackerNewsSource implements TrendSource {
                   summary: `High-signal community discussion on Hacker News by ${item.by || 'developer'} with ${rawScore} points.`,
                   sourceUrl: url,
                   sourceName: 'Hacker News',
+                  sourceType: 'DEVELOPER',
+                  sourceAuthorityScore: 8.8,
+                  technicalDepthScore: 8.8,
                   publishedAt: item.time ? new Date(item.time * 1000) : new Date(),
                   rawScore,
                   author: item.by,
@@ -124,7 +130,7 @@ export class HackerNewsSource implements TrendSource {
                   engagementScore: Math.min(10, Math.max(5, rawScore / 50)),
                   developerRelevanceScore: 9.4,
                   noveltyScore: 8.8,
-                  credibilityScore: 9.0,
+                  credibilityScore: 8.8,
                   totalScore: 0,
                 });
 
