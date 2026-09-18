@@ -19,35 +19,43 @@ export class LLMProviderFactory {
     switch (selected) {
       case 'openrouter':
         if (!process.env.LLM_API_KEY && !process.env.OPENROUTER_API_KEY) {
-          logger.warn('OpenRouter selected but no API key found. Falling back to MockLLMProvider for safe execution.');
-          return new MockLLMProvider();
+          if (process.env.NODE_ENV === 'test') return new MockLLMProvider();
+          throw new Error('OpenRouter selected but no API key found. Please provide OPENROUTER_API_KEY or LLM_API_KEY in your .env file.');
         }
         return new OpenRouterProvider();
 
       case 'openai':
         if (!process.env.LLM_API_KEY && !process.env.OPENAI_API_KEY) {
-          logger.warn('OpenAI selected but no API key found. Falling back to MockLLMProvider for safe execution.');
-          return new MockLLMProvider();
+          if (process.env.NODE_ENV === 'test') return new MockLLMProvider();
+          throw new Error('OpenAI selected but no API key found. Please provide OPENAI_API_KEY or LLM_API_KEY in your .env file.');
         }
         return new OpenAIProvider();
 
       case 'anthropic':
         if (!process.env.LLM_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-          logger.warn('Anthropic selected but no API key found. Falling back to MockLLMProvider for safe execution.');
-          return new MockLLMProvider();
+          if (process.env.NODE_ENV === 'test') return new MockLLMProvider();
+          throw new Error('Anthropic selected but no API key found. Please provide ANTHROPIC_API_KEY or LLM_API_KEY in your .env file.');
         }
         return new AnthropicProvider();
 
       case 'gemini':
         if (!process.env.LLM_API_KEY && !process.env.GEMINI_API_KEY) {
-          logger.warn('Gemini selected but no API key found. Falling back to MockLLMProvider for safe execution.');
-          return new MockLLMProvider();
+          if (process.env.NODE_ENV === 'test') return new MockLLMProvider();
+          throw new Error('Gemini selected but no API key found. Please provide GEMINI_API_KEY or LLM_API_KEY in your .env file.');
         }
         return new GoogleGeminiProvider();
 
       case 'mock':
-      default:
+        if (process.env.NODE_ENV !== 'test') {
+          logger.warn('Mock LLM provider explicitly requested in non-test environment.');
+        }
         return new MockLLMProvider();
+
+      default:
+        if (process.env.NODE_ENV === 'test') {
+          return new MockLLMProvider();
+        }
+        throw new Error(`Unknown or unconfigured LLM provider: ${selected}. Please set LLM_PROVIDER in .env to a valid provider (openrouter, openai, anthropic, gemini).`);
     }
   }
 

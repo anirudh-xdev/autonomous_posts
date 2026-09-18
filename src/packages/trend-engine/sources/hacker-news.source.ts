@@ -26,8 +26,8 @@ export class HackerNewsSource implements TrendSource {
     try {
       const isHealthy = await this.healthCheck();
       if (!isHealthy) {
-        logger.warn('HackerNewsSource offline or unreachable; using curated high-signal fixture items');
-        return this.getCuratedFallback();
+        logger.warn('HackerNewsSource offline or unreachable');
+        return process.env.NODE_ENV === 'test' ? this.getCuratedFallback() : [];
       }
 
       // Fetch top 30 stories
@@ -82,10 +82,13 @@ export class HackerNewsSource implements TrendSource {
         }
       }
 
-      return candidates.length > 0 ? candidates : this.getCuratedFallback();
+      if (candidates.length > 0) {
+        return candidates;
+      }
+      return process.env.NODE_ENV === 'test' ? this.getCuratedFallback() : [];
     } catch (err) {
       logger.error('HackerNewsSource discovery failed', err);
-      return this.getCuratedFallback();
+      return process.env.NODE_ENV === 'test' ? this.getCuratedFallback() : [];
     }
   }
 
