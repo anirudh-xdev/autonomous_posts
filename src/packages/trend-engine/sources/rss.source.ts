@@ -7,10 +7,19 @@ export class TechNewsRSSSource implements TrendSource {
   public readonly adapterType = 'rss';
 
   private static LIVE_FEEDS = [
+    { name: 'Hugging Face Daily Papers', url: 'https://huggingface.co/papers/feed.xml' },
     { name: 'Hugging Face Blog', url: 'https://huggingface.co/blog/feed.xml' },
+    { name: 'Google DeepMind Research', url: 'https://deepmind.google/blog/rss.xml' },
     { name: 'Google AI Blog', url: 'https://blog.google/technology/ai/rss/' },
-    { name: 'MIT Tech Review AI', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed/' },
+    { name: 'OpenAI News', url: 'https://openai.com/news/rss.xml' },
+    { name: 'Mistral AI News', url: 'https://mistral.ai/news/index.xml' },
     { name: 'ArXiv CS.AI Research', url: 'https://rss.arxiv.org/rss/cs.AI' },
+    { name: 'ArXiv CS.CL (Language & LLMs)', url: 'https://rss.arxiv.org/rss/cs.CL' },
+    { name: 'ArXiv CS.LG (Machine Learning)', url: 'https://rss.arxiv.org/rss/cs.LG' },
+    { name: 'vLLM Project Blog', url: 'https://blog.vllm.ai/feed.xml' },
+    { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
+    { name: 'Ars Technica Tech Lab', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
+    { name: 'MIT Tech Review AI', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed/' },
   ];
 
   async healthCheck(): Promise<boolean> {
@@ -26,8 +35,8 @@ export class TechNewsRSSSource implements TrendSource {
   }
 
   async discover(options: DiscoveryOptions = {}): Promise<TrendCandidate[]> {
-    logger.info('TechNewsRSSSource: starting live RSS discovery');
-    const limit = options.limitPerSource || 10;
+    logger.info(`TechNewsRSSSource: starting live RSS discovery across ${TechNewsRSSSource.LIVE_FEEDS.length} frontier lab & news feeds`);
+    const limit = options.limitPerSource || 20;
 
     if (process.env.NODE_ENV === 'test') {
       return this.getCuratedFallback();
@@ -50,7 +59,7 @@ export class TechNewsRSSSource implements TrendSource {
 
           const xml = await res.text();
           const parsed = this.parseXmlFeed(xml, feed.name);
-          candidates.push(...parsed.slice(0, 4));
+          candidates.push(...parsed.slice(0, 3));
         } catch (err) {
           logger.debug(`TechNewsRSSSource: failed to fetch feed [${feed.name}]`, { error: String(err) });
         }
@@ -86,7 +95,7 @@ export class TechNewsRSSSource implements TrendSource {
       // Extract description/summary
       const descMatch = content.match(/<(?:description|summary|content)[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/(?:description|summary|content)>/i);
       const rawSummary = (descMatch ? (descMatch[1] || descMatch[2]) : '').trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-      const summary = rawSummary.slice(0, 300);
+      const summary = rawSummary.slice(0, 400);
 
       // Extract date
       const dateMatch = content.match(/<(?:pubDate|published|updated)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated)>/i);
@@ -102,11 +111,11 @@ export class TechNewsRSSSource implements TrendSource {
           sourceName: feedName,
           publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
           topics,
-          freshnessScore: 9.3,
-          engagementScore: 8.8,
-          developerRelevanceScore: 9.4,
-          noveltyScore: 8.7,
-          credibilityScore: 9.6,
+          freshnessScore: 9.6,
+          engagementScore: 9.1,
+          developerRelevanceScore: 9.6,
+          noveltyScore: 9.0,
+          credibilityScore: 9.8,
           totalScore: 0,
         });
       }
@@ -118,18 +127,32 @@ export class TechNewsRSSSource implements TrendSource {
   private getCuratedFallback(): TrendCandidate[] {
     return [
       {
-        title: 'Anthropic Introduces the Model Context Protocol',
-        summary: 'An open standard for connecting AI assistants to systems where data lives, including developer tools, business tools, and content repositories.',
-        sourceUrl: 'https://www.anthropic.com/news/model-context-protocol',
-        sourceName: 'Anthropic Research',
+        title: 'Hugging Face Daily Papers: High-Throughput Inference with Speculative Decoding Graphs',
+        summary: 'Benchmarking token generation velocity across open-weight models using dynamic speculative candidate trees.',
+        sourceUrl: 'https://huggingface.co/papers',
+        sourceName: 'Hugging Face Research',
         publishedAt: new Date(),
-        topics: ['mcp', 'ai-developer-tools', 'ai-agents'],
+        topics: ['inference', 'speculative-decoding', 'open-source-ai'],
         freshnessScore: 9.8,
-        engagementScore: 9.3,
+        engagementScore: 9.5,
         developerRelevanceScore: 9.9,
-        noveltyScore: 9.2,
+        noveltyScore: 9.3,
         credibilityScore: 9.9,
-        totalScore: 94.4,
+        totalScore: 97.4,
+      },
+      {
+        title: 'DeepMind Gemini 2.0 Flash: Native Multimodal Reasoning and Low-Latency Agent Execution',
+        summary: 'Architecture updates detailing multimodal streaming, tool-calling latencies, and computer-use agent benchmarks.',
+        sourceUrl: 'https://deepmind.google/technologies/gemini',
+        sourceName: 'Google DeepMind Research',
+        publishedAt: new Date(),
+        topics: ['gemini', 'multimodal-ai', 'ai-agents'],
+        freshnessScore: 9.9,
+        engagementScore: 9.6,
+        developerRelevanceScore: 9.8,
+        noveltyScore: 9.4,
+        credibilityScore: 9.9,
+        totalScore: 97.6,
       },
     ];
   }

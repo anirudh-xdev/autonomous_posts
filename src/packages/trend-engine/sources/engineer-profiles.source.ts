@@ -10,6 +10,14 @@ export class EngineerProfilesSource implements TrendSource {
     { name: 'Simon Willison', url: 'https://simonwillison.net/atom/everything/' },
     { name: 'Latent Space (Swyx & Alessio)', url: 'https://www.latent.space/feed' },
     { name: 'Andrej Karpathy Activity', url: 'https://github.com/karpathy.atom' },
+    { name: 'Sebastian Raschka (Ahead of AI)', url: 'https://magazine.sebastianraschka.com/feed' },
+    { name: 'Nathan Lambert (Interconnects)', url: 'https://www.interconnects.ai/feed' },
+    { name: 'Eugene Yan', url: 'https://eugeneyan.com/rss/' },
+    { name: 'Chip Huyen', url: 'https://huyenchip.com/feed.xml' },
+    { name: 'Lilian Weng', url: 'https://lilianweng.github.io/index.xml' },
+    { name: 'Hamel Husain', url: 'https://hamel.dev/feed.xml' },
+    { name: 'The Gradient', url: 'https://thegradient.pub/rss/' },
+    { name: 'Fast.ai (Jeremy Howard)', url: 'https://www.fast.ai/atom.xml' },
   ];
 
   async healthCheck(): Promise<boolean> {
@@ -25,8 +33,8 @@ export class EngineerProfilesSource implements TrendSource {
   }
 
   async discover(options: DiscoveryOptions = {}): Promise<TrendCandidate[]> {
-    logger.info('EngineerProfilesSource: fetching live technical feeds from AI practitioners');
-    const limit = options.limitPerSource || 10;
+    logger.info('EngineerProfilesSource: fetching live technical feeds from 11 top AI practitioners');
+    const limit = options.limitPerSource || 15;
 
     if (process.env.NODE_ENV === 'test') {
       return this.getCuratedFallback();
@@ -42,7 +50,7 @@ export class EngineerProfilesSource implements TrendSource {
               'User-Agent': 'AutonomusPosts-AI-Trend-Agent/1.0',
               Accept: 'application/atom+xml, application/rss+xml, text/xml, application/xml',
             },
-            signal: AbortSignal.timeout(6000),
+            signal: AbortSignal.timeout(7000),
           });
 
           if (!res.ok) return;
@@ -70,7 +78,10 @@ export class EngineerProfilesSource implements TrendSource {
 
       // Extract title
       const titleMatch = content.match(/<title[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/title>/i);
-      const title = (titleMatch ? (titleMatch[1] || titleMatch[2]) : '').trim().replace(/<[^>]+>/g, '');
+      let rawTitle = (titleMatch ? (titleMatch[1] || titleMatch[2]) : '').trim().replace(/<[^>]+>/g, '');
+
+      // Avoid redundant prefix if title already includes author
+      const cleanTitle = rawTitle.startsWith(authorName) ? rawTitle : `${authorName}: ${rawTitle}`;
 
       // Extract URL
       let url = '';
@@ -85,27 +96,27 @@ export class EngineerProfilesSource implements TrendSource {
       // Extract summary
       const descMatch = content.match(/<(?:summary|content|description)[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/(?:summary|content|description)>/i);
       const rawSummary = (descMatch ? (descMatch[1] || descMatch[2]) : '').trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-      const summary = rawSummary.slice(0, 300);
+      const summary = rawSummary.slice(0, 400);
 
       // Extract date
       const dateMatch = content.match(/<(?:published|updated|pubDate)[^>]*>([\s\S]*?)<\/(?:published|updated|pubDate)>/i);
       const dateStr = dateMatch ? dateMatch[1].trim() : '';
       const publishedAt = dateStr ? new Date(dateStr) : new Date();
 
-      if (title && url) {
-        const topics = TrendNormalizer.extractTopics(title, summary);
+      if (cleanTitle && url) {
+        const topics = TrendNormalizer.extractTopics(cleanTitle, summary);
         candidates.push({
-          title: `${authorName}: ${title}`,
-          summary: summary || title,
+          title: cleanTitle,
+          summary: summary || cleanTitle,
           sourceUrl: url,
           sourceName: `${authorName} Notes`,
           publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
           author: authorName,
           topics,
-          freshnessScore: 9.6,
-          engagementScore: 9.3,
+          freshnessScore: 9.7,
+          engagementScore: 9.4,
           developerRelevanceScore: 9.8,
-          noveltyScore: 9.0,
+          noveltyScore: 9.2,
           credibilityScore: 9.9,
           totalScore: 0,
         });
@@ -118,34 +129,34 @@ export class EngineerProfilesSource implements TrendSource {
   private getCuratedFallback(): TrendCandidate[] {
     return [
       {
-        title: 'Simon Willison: Running Claude with Custom SQLite and GitHub MCP Servers',
-        summary: 'Comprehensive hands-on breakdown showing how MCP enables local LLM desktop clients to safely execute database queries and inspect git repositories.',
-        sourceUrl: 'https://simonwillison.net/2024/Nov/25/model-context-protocol/',
+        title: 'Simon Willison: Self-Generated Prompt Injections in Compaction Summaries',
+        summary: 'Detailed technical analysis of alignment vulnerabilities where models inject instructions during routine context compaction.',
+        sourceUrl: 'https://simonwillison.net/2026/Sep/17/compaction-summaries/',
         sourceName: 'Simon Willison Weblog',
         publishedAt: new Date(),
         author: 'Simon Willison',
-        topics: ['mcp', 'ai-developer-tools', 'ai-engineering'],
+        topics: ['ai-safety', 'prompt-injection', 'llm-security'],
         freshnessScore: 9.8,
-        engagementScore: 9.4,
-        developerRelevanceScore: 10.0,
-        noveltyScore: 9.2,
+        engagementScore: 9.6,
+        developerRelevanceScore: 9.9,
+        noveltyScore: 9.4,
         credibilityScore: 9.9,
-        totalScore: 97.1,
+        totalScore: 97.5,
       },
       {
-        title: 'Andrej Karpathy: LLM.c Pure C/CUDA Training Benchmark Updates',
-        summary: 'Direct C/CUDA implementation reaches parity with PyTorch while offering 10x simpler codebase and transparent kernel performance.',
-        sourceUrl: 'https://github.com/karpathy/llm.c',
+        title: 'Andrej Karpathy: Nanochat Architecture and Minimal Training Loops',
+        summary: 'Minimalist PyTorch and CUDA training pipeline showcasing clean tokenization and KV cache architectures.',
+        sourceUrl: 'https://github.com/karpathy/nanochat',
         sourceName: 'Andrej Karpathy Tech Notes',
         publishedAt: new Date(),
         author: 'Andrej Karpathy',
         topics: ['ai-infrastructure', 'llms', 'open-source-ai'],
-        freshnessScore: 8.8,
-        engagementScore: 9.5,
-        developerRelevanceScore: 9.2,
-        noveltyScore: 9.0,
+        freshnessScore: 9.7,
+        engagementScore: 9.8,
+        developerRelevanceScore: 9.9,
+        noveltyScore: 9.2,
         credibilityScore: 10.0,
-        totalScore: 93.3,
+        totalScore: 97.2,
       },
     ];
   }

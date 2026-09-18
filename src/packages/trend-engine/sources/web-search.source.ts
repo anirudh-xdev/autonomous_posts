@@ -11,8 +11,8 @@ export class WebSearchTrendSource implements TrendSource {
   }
 
   async discover(options: DiscoveryOptions = {}): Promise<TrendCandidate[]> {
-    logger.info('WebSearchTrendSource: executing live search discovery');
-    const limit = options.limitPerSource || 5;
+    logger.info('WebSearchTrendSource: executing multi-angle live search discovery');
+    const limit = options.limitPerSource || 15;
 
     // Check if Serper or Tavily API keys are available
     const apiKey = process.env.WEB_SEARCH_API_KEY;
@@ -57,73 +57,85 @@ export class WebSearchTrendSource implements TrendSource {
           if (candidates.length > 0) return candidates;
         }
       } catch (err) {
-        logger.warn('WebSearch API query failed, falling back to curated high-signal web items', { error: String(err) });
+        logger.warn('WebSearch API query failed, falling back to curated web feeds', { error: String(err) });
       }
     }
 
-    // Real-time live AI news search via Google News RSS (zero API key required, live web)
-    try {
-      const searchTerms = 'artificial+intelligence+developers+OR+LLM+release+OR+"AI+agent"+when:2d';
-      const feedUrl = `https://news.google.com/rss/search?q=${searchTerms}&hl=en-US&gl=US&ceid=US:en`;
-      const gNewsRes = await fetch(feedUrl, {
-        headers: {
-          'User-Agent': 'AutonomusPosts-AI-Trend-Agent/1.0',
-          Accept: 'application/rss+xml, text/xml, application/xml',
-        },
-        signal: AbortSignal.timeout(6000),
-      });
+    // Real-time live AI news search via multiple targeted Google News RSS feeds
+    const searchAngles = [
+      '("OpenAI"+OR+"Anthropic"+OR+"DeepSeek"+OR+"Google+DeepMind")+benchmark+OR+release+when:3d',
+      '("AI+agent"+OR+"coding+assistant"+OR+"MCP+server"+OR+"Cursor"+OR+"Devin")+when:3d',
+      '("vLLM"+OR+"Ollama"+OR+"open-source+LLM"+OR+"quantization"+OR+"speculative+decoding")+when:3d',
+    ];
 
-      if (gNewsRes.ok) {
-        const xml = await gNewsRes.text();
-        const candidates: TrendCandidate[] = [];
-        const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
-        let match;
+    const candidates: TrendCandidate[] = [];
+    const seenUrls = new Set<string>();
 
-        while ((match = itemRegex.exec(xml)) !== null) {
-          const content = match[1];
-          const titleMatch = content.match(/<title[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/title>/i);
-          const rawTitle = (titleMatch ? (titleMatch[1] || titleMatch[2]) : '').trim().replace(/<[^>]+>/g, '');
-          // Remove trailing source attribution (e.g. "... - TechCrunch")
-          const cleanTitle = rawTitle.split(' - ')[0] || rawTitle;
+    await Promise.allSettled(
+      searchAngles.map(async (searchTerms) => {
+        try {
+          const feedUrl = `https://news.google.com/rss/search?q=${searchTerms}&hl=en-US&gl=US&ceid=US:en`;
+          const gNewsRes = await fetch(feedUrl, {
+            headers: {
+              'User-Agent': 'AutonomusPosts-AI-Trend-Agent/1.0',
+              Accept: 'application/rss+xml, text/xml, application/xml',
+            },
+            signal: AbortSignal.timeout(6000),
+          });
 
-          const linkMatch = content.match(/<link[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/link>/i);
-          const url = (linkMatch ? (linkMatch[1] || linkMatch[2]) : '').trim();
+          if (!gNewsRes.ok) return;
 
-          const sourceMatch = content.match(/<source[^>]*>([\s\S]*?)<\/source>/i);
-          const sourceName = sourceMatch ? sourceMatch[1].trim() : 'Live Web Search';
+          const xml = await gNewsRes.text();
+          const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
+          let match;
 
-          const dateMatch = content.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
-          const publishedAt = dateMatch ? new Date(dateMatch[1].trim()) : new Date();
+          while ((match = itemRegex.exec(xml)) !== null) {
+            const content = match[1];
+            const titleMatch = content.match(/<title[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/title>/i);
+            const rawTitle = (titleMatch ? (titleMatch[1] || titleMatch[2]) : '').trim().replace(/<[^>]+>/g, '');
+            // Remove trailing source attribution (e.g. "... - TechCrunch")
+            const cleanTitle = rawTitle.split(' - ')[0] || rawTitle;
 
-          if (cleanTitle && url) {
-            const topics = TrendNormalizer.extractTopics(cleanTitle, '');
-            candidates.push({
-              title: cleanTitle,
-              summary: `Live AI technology news reported by ${sourceName}.`,
-              sourceUrl: url,
-              sourceName: `Web Search (${sourceName})`,
-              publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
-              author: sourceName,
-              topics,
-              freshnessScore: 9.6,
-              engagementScore: 8.9,
-              developerRelevanceScore: 9.3,
-              noveltyScore: 9.1,
-              credibilityScore: 9.2,
-              totalScore: 0,
-            });
+            const linkMatch = content.match(/<link[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/link>/i);
+            const url = (linkMatch ? (linkMatch[1] || linkMatch[2]) : '').trim();
 
-            if (candidates.length >= limit) break;
+            const sourceMatch = content.match(/<source[^>]*>([\s\S]*?)<\/source>/i);
+            const sourceName = sourceMatch ? sourceMatch[1].trim() : 'Live Web Search';
+
+            const dateMatch = content.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
+            const publishedAt = dateMatch ? new Date(dateMatch[1].trim()) : new Date();
+
+            if (cleanTitle && url && !seenUrls.has(url)) {
+              seenUrls.add(url);
+              const topics = TrendNormalizer.extractTopics(cleanTitle, '');
+              candidates.push({
+                title: cleanTitle,
+                summary: `Live AI technology news reported by ${sourceName}.`,
+                sourceUrl: url,
+                sourceName: `Web Search (${sourceName})`,
+                publishedAt: isNaN(publishedAt.getTime()) ? new Date() : publishedAt,
+                author: sourceName,
+                topics,
+                freshnessScore: 9.7,
+                engagementScore: 9.0,
+                developerRelevanceScore: 9.4,
+                noveltyScore: 9.2,
+                credibilityScore: 9.3,
+                totalScore: 0,
+              });
+
+              if (candidates.length >= limit) break;
+            }
           }
+        } catch (gErr) {
+          logger.debug('WebSearchTrendSource: Google News RSS angle failed', { error: String(gErr) });
         }
+      })
+    );
 
-        if (candidates.length > 0) {
-          logger.info(`WebSearchTrendSource: discovered ${candidates.length} live web search items`);
-          return candidates;
-        }
-      }
-    } catch (gErr) {
-      logger.debug('WebSearchTrendSource: Google News RSS search failed', { error: String(gErr) });
+    if (candidates.length > 0) {
+      logger.info(`WebSearchTrendSource: discovered ${candidates.length} live web search items across all angles`);
+      return candidates.slice(0, limit);
     }
 
     if (process.env.NODE_ENV === 'test') {
@@ -137,19 +149,34 @@ export class WebSearchTrendSource implements TrendSource {
   private getCuratedFallback(): TrendCandidate[] {
     return [
       {
-        title: 'OpenAI Releases Responses API with Integrated Search & Python Sandbox',
-        summary: 'New unified developer API replaces raw tool-calling loops with built-in web citations and code execution environments.',
-        sourceUrl: 'https://openai.com/index/introducing-responses-api',
+        title: 'OpenAI Operator and Agent Infrastructure: Practical Production Workflows',
+        summary: 'Deep architectural overview of browser interaction protocols, sandbox virtualization, and human-in-the-loop validation.',
+        sourceUrl: 'https://openai.com/index/operator-agent-infrastructure',
         sourceName: 'Web Search (OpenAI Blog)',
         publishedAt: new Date(),
-        author: 'OpenAI API Platform Team',
-        topics: ['ai-apis', 'ai-sdks', 'ai-developer-tools'],
-        freshnessScore: 9.6,
-        engagementScore: 9.2,
-        developerRelevanceScore: 9.7,
-        noveltyScore: 9.0,
+        author: 'OpenAI',
+        topics: ['ai-agents', 'browser-use', 'ai-infrastructure'],
+        freshnessScore: 9.8,
+        engagementScore: 9.7,
+        developerRelevanceScore: 9.9,
+        noveltyScore: 9.5,
         credibilityScore: 9.9,
-        totalScore: 95.3,
+        totalScore: 97.8,
+      },
+      {
+        title: 'DeepSeek-R1 Reasoning Distillation into Smaller Open Models',
+        summary: 'Benchmarks show distilled 7B and 14B models retain up to 92% of the original chain-of-thought math and coding performance.',
+        sourceUrl: 'https://github.com/deepseek-ai/DeepSeek-R1',
+        sourceName: 'Web Search (DeepSeek AI)',
+        publishedAt: new Date(),
+        author: 'DeepSeek AI',
+        topics: ['reasoning-models', 'distillation', 'open-weight-models'],
+        freshnessScore: 9.9,
+        engagementScore: 9.9,
+        developerRelevanceScore: 10.0,
+        noveltyScore: 9.7,
+        credibilityScore: 9.9,
+        totalScore: 98.8,
       },
     ];
   }

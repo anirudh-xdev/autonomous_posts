@@ -108,7 +108,16 @@ export class OpenRouterProvider implements LLMProvider {
       }
     }
 
-    // 4. Fallback to repair unclosed / truncated JSON
+    // 4. Sanitize unescaped quotes inside string values (e.g. "metaphor "keys" is...")
+    try {
+      const fixedQuotes = clean.replace(/(?<=[a-zA-Z0-9.,!?;:\s])"(?=[a-zA-Z0-9.,!?;:\s])/g, "'");
+      JSON.parse(fixedQuotes);
+      return fixedQuotes;
+    } catch {
+      // Continue to repair
+    }
+
+    // 5. Fallback to repair unclosed / truncated JSON
     const startIdx = firstBrace !== -1 ? firstBrace : 0;
     const toRepair = clean.substring(startIdx);
     const repaired = this.repairTruncatedJson(toRepair);
