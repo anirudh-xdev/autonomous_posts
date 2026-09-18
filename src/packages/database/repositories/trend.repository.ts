@@ -51,16 +51,18 @@ export class TrendRepository {
   async list(options: {
     status?: string;
     minScore?: number;
+    isSaved?: boolean;
     limit?: number;
     offset?: number;
   } = {}) {
     const where: Prisma.TrendWhereInput = {};
     if (options.status) where.status = options.status;
     if (options.minScore !== undefined) where.score = { gte: options.minScore };
+    if (options.isSaved !== undefined) where.isSaved = options.isSaved;
 
     return prisma.trend.findMany({
       where,
-      orderBy: { score: 'desc' },
+      orderBy: [{ isSaved: 'desc' }, { score: 'desc' }],
       take: options.limit ?? 50,
       skip: options.offset ?? 0,
       include: {
@@ -69,6 +71,53 @@ export class TrendRepository {
         researchReport: true,
       },
     });
+  }
+
+  async toggleSaved(id: string): Promise<Trend> {
+    const existing = await prisma.trend.findUnique({ where: { id } });
+    if (!existing) throw new Error(`Trend with id ${id} not found`);
+    return prisma.trend.update({
+      where: { id },
+      data: { isSaved: !existing.isSaved },
+    });
+  }
+
+  async setIsSaved(id: string, isSaved: boolean): Promise<Trend> {
+    return prisma.trend.update({
+      where: { id },
+      data: { isSaved },
+    });
+  }
+
+  async deleteUnsavedDiscovered(keepIds: string[] = []): Promise<number> {
+    // Delete only un-saved, un-researched trends with no content items
+    const toDelete = await prisma.trend.findMany({
+      where: {
+        isSaved: false,
+        status: 'DISCOVERED',
+        id: { notIn: keepIds },
+        contentItems: { none: {} },
+        researchReport: null,
+      },
+      select: { id: true },
+    });
+
+    if (toDelete.length === 0) return 0;
+    const deleteIds = toDelete.map((t) => t.id);
+
+    await prisma.trendEvidence.deleteMany({
+      where: { trendId: { in: deleteIds } },
+    });
+
+    await prisma.trendToTopic.deleteMany({
+      where: { trendId: { in: deleteIds } },
+    });
+
+    const res = await prisma.trend.deleteMany({
+      where: { id: { in: deleteIds } },
+    });
+
+    return res.count;
   }
 
   async createOrMerge(input: CreateTrendInput): Promise<Trend> {

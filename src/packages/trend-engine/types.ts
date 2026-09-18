@@ -20,6 +20,8 @@ export interface DiscoveryOptions {
   limitPerSource?: number;
   timeframeHours?: number;
   topicsFilter?: string[];
+  limit?: number;
+  replaceUnsaved?: boolean;
 }
 
 export interface TrendSource {

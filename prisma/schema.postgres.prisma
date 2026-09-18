@@ -48,6 +48,7 @@ model Trend {
   
   firstDetectedAt         DateTime        @default(now())
   lastDetectedAt          DateTime        @default(now())
+  isSaved                 Boolean         @default(false)
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
 
@@ -58,6 +59,7 @@ model Trend {
 
   @@index([score(sort: Desc)])
   @@index([status])
+  @@index([isSaved])
   @@index([createdAt])
 }
 

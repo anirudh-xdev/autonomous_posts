@@ -29,3 +29,21 @@ export async function GET(
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    let updated;
+    if (typeof body.isSaved === 'boolean') {
+      updated = await trendRepository.setIsSaved(params.id, body.isSaved);
+    } else {
+      updated = await trendRepository.toggleSaved(params.id);
+    }
+    return NextResponse.json({ success: true, trend: updated });
+  } catch (err) {
+    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
+  }
+}

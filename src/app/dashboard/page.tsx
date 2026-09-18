@@ -12,6 +12,7 @@ import {
   Sparkles,
   ExternalLink,
   CheckCircle2,
+  Bookmark,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [trends, setTrends] = useState<any[]>([]);
   const [contentItems, setContentItems] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [trendTab, setTrendTab] = useState<'all' | 'saved'>('all');
 
   const fetchData = async () => {
     try {
@@ -51,7 +53,11 @@ export default function DashboardPage() {
   const handleTriggerDiscovery = async () => {
     setDiscovering(true);
     try {
-      const res = await fetch('/api/trends', { method: 'POST' });
+      const res = await fetch('/api/trends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 10, replaceUnsaved: true }),
+      });
       const json = await res.json();
       if (json.success) {
         await fetchData();
@@ -63,7 +69,36 @@ export default function DashboardPage() {
     }
   };
 
-  const highScoringTrends = trends.filter((t) => t.score >= 70).slice(0, 6);
+  const handleToggleSave = async (trendId: string, currentSaved: boolean, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    // Optimistic update
+    setTrends((prev) =>
+      prev.map((t) => (t.id === trendId ? { ...t, isSaved: !currentSaved } : t))
+    );
+
+    try {
+      const res = await fetch(`/api/trends/${trendId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSaved: !currentSaved }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        // Revert on failure
+        setTrends((prev) =>
+          prev.map((t) => (t.id === trendId ? { ...t, isSaved: currentSaved } : t))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle saved status', err);
+      setTrends((prev) =>
+        prev.map((t) => (t.id === trendId ? { ...t, isSaved: currentSaved } : t))
+      );
+    }
+  };
+
+  const savedTrends = trends.filter((t) => t.isSaved);
+  const displayedTrends = trendTab === 'saved' ? savedTrends : trends.slice(0, 10);
   const pendingDrafts = contentItems.filter((i) => i.status === 'DRAFT' || i.status === 'REVIEWING');
   const publishedCount = analytics?.stats?.successful || 0;
 
@@ -143,36 +178,72 @@ export default function DashboardPage() {
 
       {/* Grid: High-Score Trends & Drafts Queue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Column 1: High Scoring Trends */}
+        {/* Column 1: Emerging AI Trends */}
         <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-400" />
-                Emerging AI Trends (Score &ge; 70)
-              </h3>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-400" />
+                  Emerging AI Trends
+                </h3>
+                {/* All vs Saved filter tabs */}
+                <div className="flex items-center bg-[#0d1117] rounded-lg p-0.5 border border-[#30363d]">
+                  <button
+                    onClick={() => setTrendTab('all')}
+                    className={`px-2.5 py-0.5 text-xs font-mono rounded-md transition-colors ${
+                      trendTab === 'all'
+                        ? 'bg-[#21262d] text-emerald-400 font-semibold shadow'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    All ({trends.slice(0, 10).length})
+                  </button>
+                  <button
+                    onClick={() => setTrendTab('saved')}
+                    className={`px-2.5 py-0.5 text-xs font-mono rounded-md transition-colors flex items-center gap-1 ${
+                      trendTab === 'saved'
+                        ? 'bg-[#21262d] text-amber-400 font-semibold shadow'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Bookmark className="w-3 h-3 fill-current" />
+                    Saved ({savedTrends.length})
+                  </button>
+                </div>
+              </div>
+
               <Link href="/trends" className="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1">
-                View all ({trends.length}) <ArrowRight className="w-3 h-3" />
+                Full Feed <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
             {loading ? (
               <div className="py-8 text-center text-sm text-zinc-500 font-mono">Loading trends...</div>
-            ) : highScoringTrends.length === 0 ? (
+            ) : displayedTrends.length === 0 ? (
               <div className="py-8 text-center text-sm text-zinc-500 font-mono">
-                No trends found yet. Click &quot;Trigger Trend Discovery&quot; above to scan sources.
+                {trendTab === 'saved'
+                  ? 'No saved trends yet. Click the bookmark icon on any trend to pin it.'
+                  : 'No trends found yet. Click "Trigger Trend Discovery" above to scan sources.'}
               </div>
             ) : (
               <div className="divide-y divide-[#30363d]">
-                {highScoringTrends.map((t) => (
-                  <div key={t.id} className="py-3.5 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <Link
-                        href={`/trends/${t.id}`}
-                        className="text-sm font-medium text-zinc-200 hover:text-emerald-400 transition-colors line-clamp-1"
-                      >
-                        {t.title}
-                      </Link>
+                {displayedTrends.map((t) => (
+                  <div key={t.id} className="py-3.5 flex items-start justify-between gap-3 group">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/trends/${t.id}`}
+                          className="text-sm font-medium text-zinc-200 hover:text-emerald-400 transition-colors line-clamp-1"
+                        >
+                          {t.title}
+                        </Link>
+                        {t.isSaved && (
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1 flex-shrink-0">
+                            <Bookmark className="w-2.5 h-2.5 fill-current" /> Saved
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-zinc-400 line-clamp-2">{t.summary}</p>
                       <div className="flex items-center gap-2 pt-1">
                         <span className="text-[10px] font-mono bg-[#21262d] text-zinc-300 px-2 py-0.5 rounded border border-[#30363d]">
@@ -181,7 +252,18 @@ export default function DashboardPage() {
                         <span className="text-[10px] font-mono text-zinc-500 uppercase">{t.status}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={(e) => handleToggleSave(t.id, Boolean(t.isSaved), e)}
+                        title={t.isSaved ? 'Unpin / Remove from Saved' : 'Save & Pin (protects from replacement)'}
+                        className={`p-1.5 rounded-lg border transition-all ${
+                          t.isSaved
+                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
+                            : 'bg-[#21262d] border-[#30363d] text-zinc-400 hover:text-amber-300 hover:border-amber-500/40'
+                        }`}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${t.isSaved ? 'fill-current' : ''}`} />
+                      </button>
                       <span className="text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded">
                         {Math.round(t.score)}/100
                       </span>

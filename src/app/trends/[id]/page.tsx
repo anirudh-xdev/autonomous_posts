@@ -14,6 +14,7 @@ import {
   FileText,
   Clock,
   Send,
+  Bookmark,
 } from 'lucide-react';
 
 export default function TrendDetailPage() {
@@ -57,6 +58,27 @@ export default function TrendDetailPage() {
       console.error('Research failed', err);
     } finally {
       setResearching(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!trend) return;
+    const nextSaved = !trend.isSaved;
+    setTrend((prev: any) => ({ ...prev, isSaved: nextSaved }));
+
+    try {
+      const res = await fetch(`/api/trends/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSaved: nextSaved }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setTrend((prev: any) => ({ ...prev, isSaved: !nextSaved }));
+      }
+    } catch (err) {
+      console.error('Failed to toggle saved', err);
+      setTrend((prev: any) => ({ ...prev, isSaved: !nextSaved }));
     }
   };
 
@@ -114,6 +136,12 @@ export default function TrendDetailPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2">
+              {trend.isSaved && (
+                <span className="text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                  <Bookmark className="w-3 h-3 fill-current" />
+                  Saved
+                </span>
+              )}
               <span className="text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded">
                 Trend Score: {Math.round(trend.score)}/100
               </span>
@@ -127,6 +155,19 @@ export default function TrendDetailPage() {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleSave}
+              title={trend.isSaved ? 'Unpin / Remove from Saved' : 'Save & Pin (protects from replacement)'}
+              className={`flex items-center gap-2 border px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                trend.isSaved
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
+                  : 'bg-[#21262d] hover:bg-[#30363d] text-zinc-300 border-[#30363d] hover:border-amber-500/40'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${trend.isSaved ? 'fill-current' : ''}`} />
+              {trend.isSaved ? 'Saved (Pinned)' : 'Save Trend'}
+            </button>
+
             <button
               onClick={handleRunResearch}
               disabled={researching}

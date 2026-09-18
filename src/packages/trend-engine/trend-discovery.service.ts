@@ -76,6 +76,19 @@ export class TrendDiscoveryService {
     const canonicalGroups = trendClusterer.cluster(allCandidates);
     logger.info(`Clustered into ${canonicalGroups.length} canonical trend topics`);
 
+    // Rank canonical groups by total score descending
+    canonicalGroups.sort((a, b) => b.score - a.score);
+
+    // Limit to requested limit (default 10 canonical trends)
+    const limit = options.limit ?? 10;
+    const topCanonicalGroups = limit > 0 ? canonicalGroups.slice(0, limit) : canonicalGroups;
+
+    // Default replaceUnsaved is true: rotate out old un-saved, un-researched trends
+    if (options.replaceUnsaved !== false) {
+      const rotatedOut = await trendRepository.deleteUnsavedDiscovered();
+      logger.info(`Rotated out ${rotatedOut} un-saved/un-researched trends before storing new trends`);
+    }
+
     // Fetch source ID mappings from database
     const dbSources = await prisma.trendSource.findMany();
     const sourceMap = new Map(dbSources.map((s) => [s.adapterType, s.id]));
@@ -83,7 +96,7 @@ export class TrendDiscoveryService {
 
     let savedCount = 0;
 
-    for (const group of canonicalGroups) {
+    for (const group of topCanonicalGroups) {
       const evidences = group.evidences.map((ev) => {
         let matchedSourceId = fallbackSourceId;
         for (const [adapterType, id] of sourceMap.entries()) {
