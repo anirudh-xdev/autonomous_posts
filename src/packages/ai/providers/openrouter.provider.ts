@@ -4,10 +4,10 @@ import { ExternalApiError, logger, env } from '@/packages/config';
 export class OpenRouterProvider implements LLMProvider {
   public readonly name = 'openrouter';
   private apiKey: string;
-  // Default to fast, high-precision free model on OpenRouter: Cohere North Mini Code
+  // Default to fast, high-precision free model on OpenRouter: NVIDIA Nemotron 3.5 Lightning
   private defaultModel: string;
 
-  constructor(apiKey?: string, defaultModel = 'cohere/north-mini-code:free') {
+  constructor(apiKey?: string, defaultModel = 'nvidia/nemotron-3.5-lightning:free') {
     this.apiKey =
       apiKey ||
       process.env.OPENROUTER_API_KEY ||
@@ -71,7 +71,10 @@ export class OpenRouterProvider implements LLMProvider {
   }
 
   private cleanJson(raw: string): string {
-    const trimmed = raw.trim();
+    let trimmed = raw.trim();
+
+    // Strip <think>...</think> reasoning blocks if present (e.g. from Nemotron/DeepSeek)
+    trimmed = trimmed.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
     // 1. If it's already valid JSON, don't alter it!
     try {
@@ -155,11 +158,15 @@ export class OpenRouterProvider implements LLMProvider {
           messages: input.messages,
           temperature: input.temperature ?? 0.7,
           max_tokens: input.maxTokens ?? 2000,
+          reasoning: {
+            effort: 'none',
+            exclude: true,
+          },
         }),
       });
     } catch (fetchErr: any) {
       if (fetchErr.name === 'AbortError') {
-        throw new ExternalApiError('OpenRouter', 'OpenRouter request timed out after 75s. Please retry.');
+        throw new ExternalApiError('OpenRouter', 'OpenRouter request timed out after 120s. Please retry.');
       }
       throw fetchErr;
     } finally {
@@ -177,8 +184,15 @@ export class OpenRouterProvider implements LLMProvider {
       usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
     };
 
+    let rawText = json.choices[0]?.message?.content || '';
+    rawText = rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    const thinkingMatch = rawText.match(/^(?:Here's a thinking process:[\s\S]*?\n\n)([\s\S]+)$/i);
+    if (thinkingMatch && thinkingMatch[1]) {
+      rawText = thinkingMatch[1].trim();
+    }
+
     return {
-      text: json.choices[0]?.message?.content || '',
+      text: rawText,
       tokensUsed: {
         promptTokens: json.usage?.prompt_tokens || 0,
         completionTokens: json.usage?.completion_tokens || 0,
@@ -208,7 +222,7 @@ export class OpenRouterProvider implements LLMProvider {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 75000);
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     let response: Response;
     try {
@@ -224,13 +238,18 @@ export class OpenRouterProvider implements LLMProvider {
         body: JSON.stringify({
           model,
           messages,
-          temperature: input.temperature ?? 0.3,
+          temperature: input.temperature ?? 0.2,
           max_tokens: input.maxTokens ?? 4096,
+          response_format: { type: 'json_object' },
+          reasoning: {
+            effort: 'none',
+            exclude: true,
+          },
         }),
       });
     } catch (fetchErr: any) {
       if (fetchErr.name === 'AbortError') {
-        throw new ExternalApiError('OpenRouter', 'OpenRouter request timed out after 75s. Please retry.');
+        throw new ExternalApiError('OpenRouter', 'OpenRouter request timed out after 120s. Please retry.');
       }
       throw fetchErr;
     } finally {
