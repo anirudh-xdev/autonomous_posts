@@ -7,7 +7,10 @@ export class PublishingCoordinator {
   /**
    * Publishes an approved content variant to its designated platform
    */
-  public static async publishVariant(variantId: string): Promise<{
+  public static async publishVariant(
+    variantId: string,
+    options?: { isManual?: boolean; bypassSafety?: boolean }
+  ): Promise<{
     success: boolean;
     publicationId?: string;
     postUrl?: string;
@@ -32,7 +35,7 @@ export class PublishingCoordinator {
 
     // 1. Safety Screen
     const safety = await SafetyService.evaluateSafety(variant.text, topicSlugs);
-    if (!safety.safe) {
+    if (!safety.safe && !options?.isManual && !options?.bypassSafety) {
       logger.warn(`Publishing blocked by safety filter for variant ${variantId}: ${safety.reason}`);
       return { success: false, error: safety.reason };
     }

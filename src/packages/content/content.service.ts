@@ -93,7 +93,7 @@ CRITICAL WRITING PRINCIPLES:
    Only recommend visuals that genuinely improve understanding (never decorative stock photos). Prefer official sources (GitHub, official lab blog).
 
 5. PLATFORM SPECIFICS:
-   - LinkedIn: 700-1300 characters. Strong whitespace (\\n\\n), 1-2 sentence paragraphs, bullet points, discussion question.
+   - LinkedIn: 1400-2600 characters (~200-420 words). Provide thorough, in-depth technical analysis across the 5 pillars without cutting off explanations. Strong whitespace (\\n\\n), 1-2 sentence paragraphs, bullet points, discussion question.
    - X Standalone: Strictly under 270 characters. Punchy, conversational, states what happened and the practical takeaway.
    - X Thread: 4-5 tweets, each strictly under 270 characters:
      * Tweet 1: Hook + what happened (🧵)
@@ -114,7 +114,7 @@ Respond ONLY with a valid JSON object matching this schema:
 {
   "linkedin": {
     "hook": "Strong, natural opening hook stating what happened",
-    "text": "Full LinkedIn post text (700-1300 chars) with short paragraphs (1-2 sentences), blank lines (\\\\n\\\\n), bullet points (•), 5 pillars, discussion question, and 1-2 hashtags"
+    "text": "Full, substantive LinkedIn post text (1400-2600 chars, ~200-420 words) with short paragraphs (1-2 sentences), blank lines (\\\\n\\\\n), bullet points (•), 5 pillars, discussion question, and 1-2 hashtags. DO NOT truncate or cut off prematurely."
   },
   "x": {
     "hook": "Punchy tweet hook",

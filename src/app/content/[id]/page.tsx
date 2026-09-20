@@ -415,7 +415,11 @@ export default function ContentEditorPage() {
                       {linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length} paragraphs
                     </span>
                     <span>•</span>
-                    <span>{linkedinText.length} / 1500 chars</span>
+                    <span>{linkedinText.trim() ? linkedinText.trim().split(/\s+/).length : 0} words</span>
+                    <span>•</span>
+                    <span className={linkedinText.length > 3000 ? 'text-rose-600 dark:text-rose-400 font-bold' : ''}>
+                      {linkedinText.length} / 3000 chars
+                    </span>
                   </div>
                 </div>
 

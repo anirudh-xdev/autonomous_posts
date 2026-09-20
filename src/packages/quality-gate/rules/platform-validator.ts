@@ -7,8 +7,8 @@ export class PlatformValidator {
     if (text.length < 250) {
       violations.push(`LinkedIn post too short (${text.length} chars). Minimum recommended is 250 characters.`);
     }
-    if (text.length > 2500) {
-      violations.push(`LinkedIn post exceeds maximum limit (${text.length} chars). Maximum is 2500 characters.`);
+    if (text.length > 3000) {
+      violations.push(`LinkedIn post exceeds maximum limit (${text.length} chars). Maximum is 3000 characters.`);
     }
 
     // Check for hashtag stuffing

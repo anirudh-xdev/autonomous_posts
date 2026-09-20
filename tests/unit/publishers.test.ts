@@ -14,10 +14,17 @@ describe('Phase 9: Social Publishers & Official APIs', () => {
     await prisma.$disconnect();
   });
 
-  it('should block publishing on sensitive topics via SafetyService', async () => {
+  it('should block publishing on sensitive topics via SafetyService without false positives on technical words', async () => {
     const sensitive = await SafetyService.evaluateSafety('Breaking election updates on political campaigns');
     expect(sensitive.safe).toBe(false);
     expect(sensitive.flaggedKeywords.length).toBeGreaterThanOrEqual(1);
+
+    // Words like "selection", "secure", "cryptographic" should NEVER be false-positive matches
+    const technicalPost = await SafetyService.evaluateSafety(
+      'Intelligent model selection dynamically routes prompts based on depth selection and secure cryptography.'
+    );
+    expect(technicalPost.safe).toBe(true);
+    expect(technicalPost.flaggedKeywords.length).toBe(0);
 
     const safe = await SafetyService.evaluateSafety('Anthropic releases Model Context Protocol standard');
     expect(safe.safe).toBe(true);

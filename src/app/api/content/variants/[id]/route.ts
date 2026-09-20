@@ -61,7 +61,7 @@ export async function POST(
         data: { status: 'APPROVED' },
       });
 
-      const pubResult = await PublishingCoordinator.publishVariant(params.id);
+      const pubResult = await PublishingCoordinator.publishVariant(params.id, { isManual: true });
       return NextResponse.json({ ...pubResult });
     }
 
