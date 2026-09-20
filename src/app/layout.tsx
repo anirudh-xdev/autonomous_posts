@@ -1,113 +1,95 @@
 import './globals.css';
 import React from 'react';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { NavigationIsland } from '@/components/navigation-island';
+import { ThemeProvider } from '@/components/theme-provider';
 import Link from 'next/link';
-import {
-  LayoutDashboard,
-  Flame,
-  FileText,
-  Calendar,
-  Send,
-  BarChart3,
-  Settings,
-  Cpu,
-  ShieldCheck,
-} from 'lucide-react';
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '500', '700'],
+});
 
 export const metadata = {
-  title: 'AI Trend Content Automation Agent',
-  description: 'Production-grade autonomous AI trend discovery, research, and multi-platform content engine',
+  title: 'Autonomous AI Content Automation Engine — Awwwards Showcase',
+  description:
+    'Award-winning autonomous intelligence system that monitors 24 global tech signals, runs deep technical research, and synthesizes developer content for LinkedIn and X.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="flex h-screen overflow-hidden bg-[#0d1117] text-[#e6edf3]">
-        {/* Sidebar */}
-        <aside className="w-64 border-r border-[#30363d] bg-[#161b22] flex flex-col justify-between p-4 flex-shrink-0">
-          <div>
-            {/* Brand Header */}
-            <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-[#30363d]">
-              <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
-                <Cpu className="w-5 h-5" />
+    <html lang="en" className={`${jakarta.variable} ${mono.variable} dark`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (savedTheme === 'light' || (!savedTheme && !prefersDark)) {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.style.colorScheme = 'light';
+                } else {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+                  document.documentElement.style.colorScheme = 'dark';
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="ambient-bg min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-700 dark:selection:text-emerald-200">
+        <ThemeProvider>
+          {/* Floating Island Navigation */}
+          <NavigationIsland />
+
+          {/* Primary Page Canvas */}
+          <main className="flex-1 w-full max-w-7xl mx-auto pt-24 sm:pt-28 md:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+            {children}
+          </main>
+
+          {/* Awwwards-Tier Micro-Footer */}
+          <footer className="w-full border-t border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-[#05070B]/80 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500 dark:text-zinc-500">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center sm:text-left">
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>SYSTEM AUTONOMOUS</span>
+                </div>
+                <span className="text-slate-300 dark:text-zinc-700">/</span>
+                <span>24 SOURCES STREAMING</span>
+                <span className="text-slate-300 dark:text-zinc-700">/</span>
+                <span>HUGGINGFACE QWEN-72B</span>
               </div>
-              <div>
-                <h1 className="font-semibold text-sm tracking-tight text-white">AI Content Engine</h1>
-                <p className="text-[11px] text-zinc-400 font-mono">Autonomous Pipeline</p>
+
+              <div className="flex items-center gap-6 text-slate-600 dark:text-zinc-400">
+                <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                  Command Center
+                </Link>
+                <Link href="/trends" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                  Radar
+                </Link>
+                <Link href="/content" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                  Studio
+                </Link>
+                <Link href="/settings" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                  Config
+                </Link>
               </div>
             </div>
-
-            {/* Navigation Links */}
-            <nav className="space-y-1">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <LayoutDashboard className="w-4 h-4 text-zinc-400" />
-                Dashboard
-              </Link>
-              <Link
-                href="/trends"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <Flame className="w-4 h-4 text-amber-400" />
-                Trends
-              </Link>
-              <Link
-                href="/content"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <FileText className="w-4 h-4 text-sky-400" />
-                Content & Drafts
-              </Link>
-              <Link
-                href="/calendar"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <Calendar className="w-4 h-4 text-purple-400" />
-                Calendar
-              </Link>
-              <Link
-                href="/publications"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <Send className="w-4 h-4 text-emerald-400" />
-                Publications
-              </Link>
-              <Link
-                href="/analytics"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <BarChart3 className="w-4 h-4 text-cyan-400" />
-                Analytics
-              </Link>
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-[#21262d] text-zinc-300 hover:text-white transition-colors"
-              >
-                <Settings className="w-4 h-4 text-zinc-400" />
-                Settings
-              </Link>
-            </nav>
-          </div>
-
-          {/* System Status Footer */}
-          <div className="pt-4 border-t border-[#30363d] text-xs font-mono text-zinc-400">
-            <div className="flex items-center justify-between mb-2">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                System Ready
-              </span>
-              <span className="text-[10px] bg-[#21262d] px-1.5 py-0.5 rounded border border-[#30363d]">v1.0.0</span>
-            </div>
-            <div className="flex items-center gap-1 text-[11px] text-zinc-500">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Quality Gate Active
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Workspace Area */}
-        <main className="flex-1 overflow-y-auto bg-[#0d1117] p-8">{children}</main>
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

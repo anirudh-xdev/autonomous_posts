@@ -23,6 +23,8 @@ import {
   Wand2,
   Download,
   RefreshCw,
+  ArrowUpRight,
+  Clock,
 } from 'lucide-react';
 
 export default function ContentEditorPage() {
@@ -137,16 +139,20 @@ export default function ContentEditorPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto py-12 text-center font-mono text-sm text-zinc-500">
-        Loading post review workspace...
+      <div className="double-bezel-outer max-w-4xl mx-auto">
+        <div className="double-bezel-inner p-16 text-center font-mono text-sm text-slate-400 dark:text-zinc-500 animate-pulse">
+          Loading post review workspace...
+        </div>
       </div>
     );
   }
 
   if (!item) {
     return (
-      <div className="max-w-6xl mx-auto py-12 text-center font-mono text-sm text-zinc-500">
-        Content item not found.
+      <div className="double-bezel-outer max-w-4xl mx-auto">
+        <div className="double-bezel-inner p-16 text-center font-mono text-sm text-slate-400 dark:text-zinc-500">
+          Content item not found.
+        </div>
       </div>
     );
   }
@@ -163,299 +169,318 @@ export default function ContentEditorPage() {
     : [];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Back Link and Header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+      {/* Back Link and Status Feedback */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <Link
           href="/content"
-          className="text-xs font-mono text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Drafts
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Synthesized Drafts</span>
         </Link>
         {statusMessage && (
-          <span className="text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded">
+          <span className="text-xs font-mono bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-3.5 py-1 rounded-full shadow-sm dark:shadow-specular font-semibold">
             {statusMessage}
           </span>
         )}
       </div>
 
-      {/* Post Context Banner */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-4 flex items-center justify-between">
-        <div>
-          <span className="text-[10px] font-mono uppercase text-zinc-500">Source Trend</span>
-          <h2 className="text-base font-semibold text-white">{item.trend?.title}</h2>
+      {/* Source Trend Context Card (Double-Bezel) */}
+      <div className="double-bezel-outer">
+        <div className="double-bezel-inner p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-500 font-bold">
+              SOURCE TREND SIGNAL
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+              {item.trend?.title}
+            </h2>
+          </div>
+          <Link
+            href={`/trends/${item.trend?.id}`}
+            className="btn-island-secondary !text-xs !py-1.5 !px-3 self-start sm:self-center"
+          >
+            <span>View Research Dossier</span>
+            <ExternalLink className="w-3 h-3 text-slate-500 dark:text-zinc-400" />
+          </Link>
         </div>
-        <Link
-          href={`/trends/${item.trend?.id}`}
-          className="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1"
-        >
-          View Research Dossier <ExternalLink className="w-3 h-3" />
-        </Link>
       </div>
 
-      {/* Visual & AI Image Studio */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#30363d] pb-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-              Visual & AI Image Studio
-            </h3>
-            <span className="text-[10px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">
+      {/* Visual & AI Image Studio (Double-Bezel) */}
+      <div className="double-bezel-outer">
+        <div className="double-bezel-inner p-5 sm:p-7 md:p-8 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.06] pb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                <ImageIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white font-mono uppercase tracking-wider">
+                  Visual &amp; AI Image Studio
+                </h3>
+                <p className="text-[11px] font-mono text-slate-500 dark:text-zinc-400">
+                  Generate 1200×630 technical architecture diagrams with FLUX.1
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 px-2.5 py-1 rounded-full font-semibold">
               FLUX.1-schnell Free Serverless
             </span>
           </div>
-          <span className="text-[11px] font-mono text-zinc-400">
-            Generate high-resolution (1200×630) technical diagrams & cards for LinkedIn and X
-          </span>
-        </div>
 
-        {/* Error Alert if Image Generation Fails */}
-        {imageError && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs font-mono text-red-300 flex items-center justify-between">
-            <span>{imageError}</span>
-            <button onClick={() => setImageError(null)} className="text-zinc-500 hover:text-zinc-300">
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Generated Image Preview or Generator Input */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {item?.imageUrl ? (
-            <div className="lg:col-span-6 space-y-2">
-              <div className="relative group rounded-lg overflow-hidden border border-[#30363d] bg-[#0d1117]">
-                <img
-                  src={item.imageUrl}
-                  alt="Generated Post Visual"
-                  className="w-full h-auto object-cover max-h-64 rounded-lg"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <a
-                    href={item.imageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-zinc-800/90 hover:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-md font-mono flex items-center gap-1.5 border border-zinc-600"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" /> Full Size
-                  </a>
-                  <a
-                    href={item.imageUrl}
-                    download="post-visual.png"
-                    className="bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md font-mono flex items-center gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Download
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500">
-                <span>Static Asset: {item.imageUrl}</span>
-                <span className="text-emerald-400 font-medium">Ready for Publishing</span>
-              </div>
-            </div>
-          ) : (
-            <div className="lg:col-span-6 border-2 border-dashed border-[#30363d] rounded-lg p-6 flex flex-col items-center justify-center text-center space-y-2 bg-[#0d1117]/50 min-h-[160px]">
-              <Wand2 className="w-8 h-8 text-zinc-600" />
-              <p className="text-xs font-mono text-zinc-400">No visual generated for this post yet.</p>
-              <p className="text-[11px] text-zinc-500">
-                Click generate below to synthesize a tailored technical diagram using FLUX.1.
-              </p>
+          {/* Error Alert if Image Generation Fails */}
+          {imageError && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-mono text-rose-700 dark:text-rose-300 flex items-center justify-between">
+              <span>{imageError}</span>
+              <button onClick={() => setImageError(null)} className="text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300">
+                ✕
+              </button>
             </div>
           )}
 
-          {/* Generator Controls */}
-          <div className="lg:col-span-6 space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-zinc-400 block">
-                Visual Prompt Customization (Optional)
-              </label>
-              <input
-                type="text"
-                value={customImagePrompt}
-                onChange={(e) => setCustomImagePrompt(e.target.value)}
-                placeholder={`e.g. Modern dark blueprint diagram of ${item.trend?.title || 'system architecture'}`}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-zinc-200 font-mono focus:outline-none focus:border-purple-500"
-              />
-              <span className="text-[10px] text-zinc-500 block font-mono">
-                Leave blank to automatically synthesize an architecture diagram from research findings.
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleGenerateImage}
-                disabled={generatingImage}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-mono font-medium transition-all shadow-md shadow-purple-950/30 disabled:opacity-50"
-              >
-                {generatingImage ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    Generating with FLUX...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-3.5 h-3.5" />
-                    {item?.imageUrl ? 'Regenerate Free AI Visual' : 'Generate Free AI Visual'}
-                  </>
-                )}
-              </button>
-              <span className="text-[10px] font-mono text-zinc-500">
-                Zero Cost • 1200×630 Card
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recommended Visual References from Research */}
-        {visualReferences.length > 0 && (
-          <div className="border-t border-[#30363d] pt-3 space-y-2">
-            <h4 className="text-[11px] font-mono uppercase text-zinc-400 font-semibold">
-              Recommended Architecture & Benchmark References ({visualReferences.length})
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {visualReferences.map((visual: any, idx: number) => {
-                const getBadge = (type: string) => {
-                  switch (type) {
-                    case 'architecture_diagram':
-                      return { label: 'Architecture Diagram', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30', icon: Layers };
-                    case 'product_screenshot':
-                      return { label: 'Product Screenshot', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30', icon: Monitor };
-                    case 'benchmark_chart':
-                      return { label: 'Benchmark Chart', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: BarChart3 };
-                    case 'official_image':
-                      return { label: 'Official Release Visual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30', icon: ImageIcon };
-                    default:
-                      return { label: 'Concept Diagram', color: 'bg-sky-500/10 text-sky-400 border-sky-500/30', icon: Lightbulb };
-                  }
-                };
-                const badge = getBadge(visual.type);
-                const BadgeIcon = badge.icon;
-
-                return (
-                  <div
-                    key={idx}
-                    className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3 flex flex-col justify-between space-y-1.5 hover:border-zinc-500 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border flex items-center gap-1 font-semibold ${badge.color}`}>
-                          <BadgeIcon className="w-3 h-3" />
-                          {badge.label}
-                        </span>
-                        {visual.suggestedSourceUrl && (
-                          <a
-                            href={visual.suggestedSourceUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[11px] font-mono text-emerald-400 hover:underline flex items-center gap-1"
-                          >
-                            Source <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
-                      </div>
-                      <h4 className="text-xs font-semibold text-zinc-100">{visual.title}</h4>
-                      <p className="text-[11px] text-zinc-400 leading-relaxed">{visual.description}</p>
-                    </div>
-                    {visual.reasonWhyHelpful && (
-                      <div className="border-t border-[#21262d] pt-1.5 text-[10px] text-zinc-500 font-mono">
-                        <span className="text-zinc-400 font-semibold">Why it helps:</span> {visual.reasonWhyHelpful}
-                      </div>
-                    )}
+          {/* Generated Image Preview or Generator Input */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {item?.imageUrl ? (
+              <div className="lg:col-span-6 space-y-2.5">
+                <div className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-white/[0.08] bg-slate-900 shadow-2xl">
+                  <img
+                    src={item.imageUrl}
+                    alt="Generated Post Visual"
+                    className="w-full h-auto object-cover max-h-72 rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                    <a
+                      href={item.imageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-white/20 hover:bg-white/30 text-white text-xs px-3.5 py-2 rounded-full font-mono flex items-center gap-1.5 border border-white/30"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Full Size
+                    </a>
+                    <a
+                      href={item.imageUrl}
+                      download="post-visual.png"
+                      className="btn-island-primary !text-xs !py-1.5 !px-3"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Download
+                    </a>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Side-by-Side Editor Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ================= LinkedIn Column ================= */}
-        {linkedinVariant && (
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#30363d] pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
-                    LinkedIn Post
-                  </span>
-                  <span className="text-[11px] font-mono text-zinc-400 uppercase">
-                    Status: {linkedinVariant.status}
-                  </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-[11px] font-mono ${linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length >= 3 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length} paragraphs
-                  </span>
-                  <span className="text-xs font-mono text-zinc-400">
-                    {linkedinText.length} / 1500 chars
-                  </span>
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-zinc-500 px-1">
+                  <span>Asset: 1200×630 PNG</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Ready for Publishing</span>
                 </div>
               </div>
+            ) : (
+              <div className="lg:col-span-6 border-2 border-dashed border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center space-y-2.5 bg-slate-50 dark:bg-white/[0.01] min-h-[180px]">
+                <Wand2 className="w-8 h-8 text-slate-400 dark:text-zinc-600" />
+                <p className="text-xs font-mono text-slate-600 dark:text-zinc-400">No visual generated for this post yet.</p>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-500 max-w-sm">
+                  Click generate below to synthesize a tailored technical architecture diagram using FLUX.1.
+                </p>
+              </div>
+            )}
 
-              {/* Quality Audit Scorecard */}
-              {linkedinVariant.qualityChecks?.[0] && (
-                <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-zinc-400 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" /> Quality Score:
+            {/* Generator Controls */}
+            <div className="lg:col-span-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono text-slate-700 dark:text-zinc-400 block font-semibold">
+                  Visual Prompt Customization (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={customImagePrompt}
+                  onChange={(e) => setCustomImagePrompt(e.target.value)}
+                  placeholder={`e.g. Modern dark blueprint diagram of ${item.trend?.title || 'system architecture'}`}
+                  className="w-full bg-slate-50 dark:bg-[#05070B] border border-slate-200 dark:border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-zinc-200 font-mono focus:outline-none focus:border-purple-500 shadow-sm dark:shadow-specular placeholder:text-slate-400 dark:placeholder:text-zinc-600"
+                />
+                <span className="text-[10px] text-slate-500 dark:text-zinc-500 block font-mono">
+                  Leave blank to automatically synthesize an architecture diagram from research findings.
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={generatingImage}
+                  className="btn-island-primary !bg-gradient-to-r !from-purple-600 !to-indigo-600 !text-white !border-none !py-2 !px-4 disabled:opacity-50"
+                >
+                  {generatingImage ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Synthesizing with FLUX...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>{item?.imageUrl ? 'Regenerate Free AI Visual' : 'Generate Free AI Visual'}</span>
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                        <ArrowUpRight className="w-3 h-3 text-white" />
+                      </div>
+                    </>
+                  )}
+                </button>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500">
+                  Zero Cost • 1200×630 Preview Card
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommended Visual References from Research */}
+          {visualReferences.length > 0 && (
+            <div className="border-t border-slate-200 dark:border-white/[0.06] pt-4 space-y-3">
+              <h4 className="text-[11px] font-mono uppercase tracking-wider text-slate-600 dark:text-zinc-400 font-bold">
+                Recommended Architecture References ({visualReferences.length})
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {visualReferences.map((visual: any, idx: number) => {
+                  const getBadge = (type: string) => {
+                    switch (type) {
+                      case 'architecture_diagram':
+                        return { label: 'Architecture Diagram', color: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30', icon: Layers };
+                      case 'product_screenshot':
+                        return { label: 'Product Screenshot', color: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30', icon: Monitor };
+                      case 'benchmark_chart':
+                        return { label: 'Benchmark Chart', color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30', icon: BarChart3 };
+                      case 'official_image':
+                        return { label: 'Official Release Visual', color: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30', icon: ImageIcon };
+                      default:
+                        return { label: 'Concept Diagram', color: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30', icon: Lightbulb };
+                    }
+                  };
+                  const badge = getBadge(visual.type);
+                  const BadgeIcon = badge.icon;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] flex flex-col justify-between space-y-2 hover:border-slate-300 dark:hover:border-white/[0.1] transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border flex items-center gap-1 font-semibold ${badge.color}`}>
+                            <BadgeIcon className="w-3 h-3" />
+                            {badge.label}
+                          </span>
+                          {visual.suggestedSourceUrl && (
+                            <a
+                              href={visual.suggestedSourceUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                            >
+                              <span>Source</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100">{visual.title}</h4>
+                        <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">{visual.description}</p>
+                      </div>
+                      {visual.reasonWhyHelpful && (
+                        <div className="border-t border-slate-200/60 dark:border-white/[0.03] pt-2 text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
+                          <span className="text-slate-600 dark:text-zinc-400 font-semibold">Why it helps:</span> {visual.reasonWhyHelpful}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Side-by-Side Editor Columns (Double-Bezel) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* ================= LinkedIn Column ================= */}
+        {linkedinVariant && (
+          <div className="double-bezel-outer">
+            <div className="double-bezel-inner p-5 sm:p-6 space-y-4 flex flex-col justify-between h-full">
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.06] pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-full">
+                      LinkedIn Post
                     </span>
-                    <span className="font-bold text-emerald-400">
-                      {Math.round(linkedinVariant.qualityChecks[0].overallScore)}/100
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 uppercase">
+                      Status: {linkedinVariant.status}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-zinc-400 border-t border-[#21262d] pt-2">
-                    <div>Factual: {linkedinVariant.qualityChecks[0].factualAccuracy}%</div>
-                    <div>Originality: {linkedinVariant.qualityChecks[0].originality}%</div>
-                    <div>Spam: {linkedinVariant.qualityChecks[0].spamScore}%</div>
+                  <div className="flex items-center gap-2 sm:gap-3 font-mono text-xs text-slate-500 dark:text-zinc-400">
+                    <span className={linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length >= 3 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-amber-600 dark:text-amber-400'}>
+                      {linkedinText.split(/\n\s*\n/).filter((p) => p.trim()).length} paragraphs
+                    </span>
+                    <span>•</span>
+                    <span>{linkedinText.length} / 1500 chars</span>
                   </div>
                 </div>
-              )}
 
-              {/* Editable Text Area */}
-              <textarea
-                value={linkedinText}
-                onChange={(e) => setLinkedinText(e.target.value)}
-                rows={14}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg p-3 text-xs text-zinc-200 font-sans leading-relaxed focus:outline-none focus:border-blue-500"
-                placeholder="Write or edit LinkedIn post..."
-              />
-            </div>
+                {/* Quality Audit Scorecard */}
+                {linkedinVariant.qualityChecks?.[0] && (
+                  <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-slate-600 dark:text-zinc-400 flex items-center gap-1.5 font-semibold">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Quality Gate:
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {Math.round(linkedinVariant.qualityChecks[0].overallScore)}/100
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-slate-500 dark:text-zinc-400 border-t border-slate-200 dark:border-white/[0.04] pt-2">
+                      <div>Factual: {linkedinVariant.qualityChecks[0].factualAccuracy}%</div>
+                      <div>Originality: {linkedinVariant.qualityChecks[0].originality}%</div>
+                      <div>Spam: {linkedinVariant.qualityChecks[0].spamScore}%</div>
+                    </div>
+                  </div>
+                )}
 
-            {/* Action Buttons */}
-            <div className="pt-3 border-t border-[#30363d] flex items-center justify-between gap-2 flex-wrap">
-              <button
-                onClick={() => handleSaveText(linkedinVariant.id, linkedinText)}
-                disabled={savingVariantId === linkedinVariant.id}
-                className="flex items-center gap-1.5 text-xs bg-[#21262d] hover:bg-[#30363d] text-zinc-200 px-3 py-1.5 rounded-lg font-medium transition-colors border border-[#30363d]"
-              >
-                <Save className="w-3.5 h-3.5" />
-                {savingVariantId === linkedinVariant.id ? 'Saving...' : 'Save Edits'}
-              </button>
+                {/* Editable Text Area */}
+                <textarea
+                  value={linkedinText}
+                  onChange={(e) => setLinkedinText(e.target.value)}
+                  rows={14}
+                  className="w-full bg-slate-50 dark:bg-[#05070B] border border-slate-200 dark:border-white/[0.08] rounded-xl p-4 text-xs sm:text-sm text-slate-900 dark:text-zinc-200 font-sans leading-relaxed focus:outline-none focus:border-sky-500 shadow-sm dark:shadow-specular"
+                  placeholder="Write or edit LinkedIn post..."
+                />
+              </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] flex items-center justify-between gap-2 flex-wrap">
                 <button
-                  onClick={() => handleAction(linkedinVariant.id, 'reject')}
-                  className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                  onClick={() => handleSaveText(linkedinVariant.id, linkedinText)}
+                  disabled={savingVariantId === linkedinVariant.id}
+                  className="btn-island-secondary !text-xs !py-1.5 !px-3"
                 >
-                  Reject
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{savingVariantId === linkedinVariant.id ? 'Saving...' : 'Save Edits'}</span>
                 </button>
-                <button
-                  onClick={() => handleAction(linkedinVariant.id, 'approve')}
-                  className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleAction(linkedinVariant.id, 'publish')}
-                  disabled={publishingVariantId === linkedinVariant.id}
-                  className="flex items-center gap-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium transition-colors shadow-lg shadow-emerald-950/20"
-                >
-                  <Send className="w-3 h-3" />
-                  {publishingVariantId === linkedinVariant.id ? 'Publishing...' : 'Publish'}
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleAction(linkedinVariant.id, 'reject')}
+                    className="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-full font-medium transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleAction(linkedinVariant.id, 'approve')}
+                    className="text-xs bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-200 border border-sky-500/40 px-3 py-1.5 rounded-full font-medium transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleAction(linkedinVariant.id, 'publish')}
+                    disabled={publishingVariantId === linkedinVariant.id}
+                    className="btn-island-primary !text-xs !py-1.5 !px-3.5"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>{publishingVariantId === linkedinVariant.id ? 'Publishing...' : 'Publish'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -463,101 +488,107 @@ export default function ContentEditorPage() {
 
         {/* ================= X (Twitter) Column ================= */}
         {xVariant && (
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#30363d] pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded">
-                    X (Twitter) {xVariant.isThread ? 'Thread' : 'Post'}
-                  </span>
-                  <span className="text-[11px] font-mono text-zinc-400 uppercase">
-                    Status: {xVariant.status}
+          <div className="double-bezel-outer">
+            <div className="double-bezel-inner p-5 sm:p-6 space-y-4 flex flex-col justify-between h-full">
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.06] pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 border border-slate-300 dark:border-zinc-700 px-2.5 py-0.5 rounded-full">
+                      X (Twitter) {xVariant.isThread ? 'Thread' : 'Post'}
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 uppercase">
+                      Status: {xVariant.status}
+                    </span>
+                  </div>
+                  <span className={`text-xs font-mono ${xText.length > 280 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-zinc-400'}`}>
+                    {xText.length} / 280 chars
                   </span>
                 </div>
-                <span className={`text-xs font-mono ${xText.length > 280 ? 'text-red-400 font-bold' : 'text-zinc-400'}`}>
-                  {xText.length} / 280 chars
-                </span>
+
+                {/* Quality Audit Scorecard */}
+                {xVariant.qualityChecks?.[0] && (
+                  <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-slate-600 dark:text-zinc-400 flex items-center gap-1.5 font-semibold">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Quality Gate:
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {Math.round(xVariant.qualityChecks[0].overallScore)}/100
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-slate-500 dark:text-zinc-400 border-t border-slate-200 dark:border-white/[0.04] pt-2">
+                      <div>Factual: {xVariant.qualityChecks[0].factualAccuracy}%</div>
+                      <div>Originality: {xVariant.qualityChecks[0].originality}%</div>
+                      <div>Spam: {xVariant.qualityChecks[0].spamScore}%</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Editable Text Area */}
+                <textarea
+                  value={xText}
+                  onChange={(e) => setXText(e.target.value)}
+                  rows={xVariant.isThread ? 6 : 14}
+                  className={`w-full bg-slate-50 dark:bg-[#05070B] border rounded-xl p-4 text-xs sm:text-sm text-slate-900 dark:text-zinc-200 font-sans leading-relaxed focus:outline-none shadow-sm dark:shadow-specular ${
+                    xText.length > 280 ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 dark:border-white/[0.08] focus:border-slate-400 dark:focus:border-zinc-400'
+                  }`}
+                  placeholder="Write or edit X post..."
+                />
+
+                {/* Thread preview if threadPosts exists */}
+                {xVariant.isThread && xVariant.threadPosts && (
+                  <div className="space-y-2 pt-2">
+                    <span className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 uppercase block tracking-wider font-semibold">
+                      Connected Thread Tweets:
+                    </span>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {(typeof xVariant.threadPosts === 'string' ? JSON.parse(xVariant.threadPosts) : xVariant.threadPosts).map((post: string, idx: number) => (
+                        <div key={idx} className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] rounded-xl p-3 text-xs text-slate-700 dark:text-zinc-300">
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 block mb-1">
+                            Tweet #{idx + 1} ({post.length}c)
+                          </span>
+                          {post}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Quality Audit Scorecard */}
-              {xVariant.qualityChecks?.[0] && (
-                <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-zinc-400 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" /> Quality Score:
-                    </span>
-                    <span className="font-bold text-emerald-400">
-                      {Math.round(xVariant.qualityChecks[0].overallScore)}/100
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-[10px] font-mono text-zinc-400 border-t border-[#21262d] pt-2">
-                    <div>Factual: {xVariant.qualityChecks[0].factualAccuracy}%</div>
-                    <div>Originality: {xVariant.qualityChecks[0].originality}%</div>
-                    <div>Spam: {xVariant.qualityChecks[0].spamScore}%</div>
-                  </div>
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] flex items-center justify-between gap-2 flex-wrap">
+                <button
+                  onClick={() => handleSaveText(xVariant.id, xText)}
+                  disabled={savingVariantId === xVariant.id}
+                  className="btn-island-secondary !text-xs !py-1.5 !px-3"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{savingVariantId === xVariant.id ? 'Saving...' : 'Save Edits'}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleAction(xVariant.id, 'reject')}
+                    className="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-full font-medium transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleAction(xVariant.id, 'approve')}
+                    className="text-xs bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-full font-medium transition-colors border border-slate-300 dark:border-zinc-600"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleAction(xVariant.id, 'publish')}
+                    disabled={publishingVariantId === xVariant.id || xText.length > 280}
+                    className="btn-island-primary !text-xs !py-1.5 !px-3.5 disabled:opacity-50"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>{publishingVariantId === xVariant.id ? 'Publishing...' : 'Publish'}</span>
+                  </button>
                 </div>
-              )}
-
-              {/* Editable Text Area */}
-              <textarea
-                value={xText}
-                onChange={(e) => setXText(e.target.value)}
-                rows={xVariant.isThread ? 6 : 14}
-                className={`w-full bg-[#0d1117] border rounded-lg p-3 text-xs text-zinc-200 font-sans leading-relaxed focus:outline-none ${
-                  xText.length > 280 ? 'border-red-500 focus:border-red-500' : 'border-[#30363d] focus:border-sky-500'
-                }`}
-                placeholder="Write or edit X post..."
-              />
-
-              {/* Thread preview if threadPosts exists */}
-              {xVariant.isThread && xVariant.threadPosts && (
-                <div className="space-y-2 pt-2">
-                  <span className="text-[11px] font-mono text-zinc-400 uppercase block">Connected Thread Tweets:</span>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {xVariant.threadPosts.map((post: string, idx: number) => (
-                      <div key={idx} className="bg-[#0d1117] border border-[#30363d] rounded p-2 text-xs text-zinc-300">
-                        <span className="text-[10px] font-mono text-zinc-500 block mb-1">Tweet #{idx + 1} ({post.length}c)</span>
-                        {post}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-3 border-t border-[#30363d] flex items-center justify-between gap-2 flex-wrap">
-              <button
-                onClick={() => handleSaveText(xVariant.id, xText)}
-                disabled={savingVariantId === xVariant.id}
-                className="flex items-center gap-1.5 text-xs bg-[#21262d] hover:bg-[#30363d] text-zinc-200 px-3 py-1.5 rounded-lg font-medium transition-colors border border-[#30363d]"
-              >
-                <Save className="w-3.5 h-3.5" />
-                {savingVariantId === xVariant.id ? 'Saving...' : 'Save Edits'}
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleAction(xVariant.id, 'reject')}
-                  className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg font-medium transition-colors"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => handleAction(xVariant.id, 'approve')}
-                  className="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleAction(xVariant.id, 'publish')}
-                  disabled={publishingVariantId === xVariant.id || xText.length > 280}
-                  className="flex items-center gap-1 text-xs bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors shadow-lg shadow-emerald-950/20"
-                >
-                  <Send className="w-3 h-3" />
-                  {publishingVariantId === xVariant.id ? 'Publishing...' : 'Publish'}
-                </button>
               </div>
             </div>
           </div>

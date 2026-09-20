@@ -41,7 +41,7 @@ export async function POST(
 
     const result = await imageGeneratorService.generatePostImage({
       title: item.trend?.title || 'AI System Architecture',
-      topic: item.trend?.category || 'AI Engineering',
+      topic: (item.trend as any)?.topics?.[0]?.topic?.name || 'AI Engineering',
       visualConcept,
       customPrompt: body.customPrompt,
     });
